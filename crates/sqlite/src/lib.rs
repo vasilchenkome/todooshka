@@ -5,7 +5,9 @@
 mod error;
 mod migrations;
 mod pool;
+mod projects;
 
 pub use error::StorageError;
 pub use migrations::{migrate, migrator};
 pub use pool::connect;
+pub use projects::SqliteProjects;
