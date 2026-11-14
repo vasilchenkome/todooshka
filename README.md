@@ -74,7 +74,7 @@ Requirements: Rust 1.99 or newer, Node.js 26 or newer, npm.
 
 ```bash
 # 1. Create the only user (runs against the same SQLite file)
-cargo run -- user add -u kirill
+cargo run -- user add -u demo
 
 # 2. Backend on http://127.0.0.1:8080
 cargo run
@@ -103,15 +103,15 @@ path is rejected at startup instead of being silently treated as a database name
 The account is created from the CLI, against the same database the server uses:
 
 ```bash
-todooshka user add -u kirill      # password is read twice, hidden
-todooshka user passwd -u kirill   # changing it revokes all sessions
+todooshka user add -u demo      # password is read twice, hidden
+todooshka user passwd -u demo   # changing it revokes all sessions
 todooshka user list
 todooshka healthcheck             # 0 when /api/health/ready returns 200
 todooshka backup ./copy.db        # VACUUM INTO + integrity_check
 ```
 
 For scripts and containers, pass the password as one line:
-`todooshka user add -u kirill --password-stdin`.
+`todooshka user add -u demo --password-stdin`.
 
 Everything except `/api/health`, `/api/health/ready`, and `/api/auth/login` requires a session
 cookie (`HttpOnly`, `SameSite=Lax`, 30 days).
@@ -156,7 +156,7 @@ docker compose pull
 docker compose up -d
 docker compose ps            # app should become healthy
 
-docker compose exec app todooshka user add -u kirill
+docker compose exec app todooshka user add -u demo
 ```
 
 ### Update and rollback

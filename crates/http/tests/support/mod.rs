@@ -24,7 +24,7 @@ use todooshka_sqlite::{
 };
 use tower::ServiceExt;
 
-pub const USERNAME: &str = "kirill";
+pub const USERNAME: &str = "demo";
 pub const PASSWORD: &str = "test-password-123";
 
 pub struct FixedClock(AtomicI64);

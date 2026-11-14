@@ -135,9 +135,9 @@ mod tests {
 
     #[test]
     fn username_is_trimmed() {
-        let username = Username::parse("  kirill  ").expect("логин валиден");
+        let username = Username::parse("  demo  ").expect("логин валиден");
 
-        assert_eq!(username.as_str(), "kirill");
+        assert_eq!(username.as_str(), "demo");
     }
 
     #[test]

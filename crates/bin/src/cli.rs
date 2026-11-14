@@ -138,17 +138,17 @@ mod tests {
     #[test]
     fn user_add_reads_username_and_flag() {
         assert_eq!(
-            parse_args(&["user", "add", "-u", "kirill"]).expect("команда"),
+            parse_args(&["user", "add", "-u", "demo"]).expect("команда"),
             Command::UserAdd {
-                username: "kirill".to_owned(),
+                username: "demo".to_owned(),
                 password_from_stdin: false
             }
         );
         assert_eq!(
-            parse_args(&["user", "add", "--username", "kirill", "--password-stdin"])
+            parse_args(&["user", "add", "--username", "demo", "--password-stdin"])
                 .expect("команда"),
             Command::UserAdd {
-                username: "kirill".to_owned(),
+                username: "demo".to_owned(),
                 password_from_stdin: true
             }
         );
@@ -157,9 +157,9 @@ mod tests {
     #[test]
     fn user_passwd_and_list_are_recognized() {
         assert_eq!(
-            parse_args(&["user", "passwd", "-u", "kirill"]).expect("команда"),
+            parse_args(&["user", "passwd", "-u", "demo"]).expect("команда"),
             Command::UserPasswd {
-                username: "kirill".to_owned(),
+                username: "demo".to_owned(),
                 password_from_stdin: false
             }
         );

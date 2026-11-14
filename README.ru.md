@@ -73,7 +73,7 @@ Todooshka — маленькая быстрая доска для одного �
 
 ```bash
 # 1. Создать единственного пользователя (та же база SQLite)
-cargo run -- user add -u kirill
+cargo run -- user add -u demo
 
 # 2. Бэкенд на http://127.0.0.1:8080
 cargo run
@@ -102,15 +102,15 @@ npm run dev
 Учётная запись создаётся из CLI и работает с той же базой, что и сервер:
 
 ```bash
-todooshka user add -u kirill      # пароль вводится скрыто, дважды
-todooshka user passwd -u kirill   # смена пароля отзывает все сессии
+todooshka user add -u demo      # пароль вводится скрыто, дважды
+todooshka user passwd -u demo   # смена пароля отзывает все сессии
 todooshka user list
 todooshka healthcheck             # 0, если /api/health/ready отвечает 200
 todooshka backup ./copy.db        # VACUUM INTO + integrity_check
 ```
 
 Для скриптов и контейнера пароль передаётся одной строкой:
-`todooshka user add -u kirill --password-stdin`.
+`todooshka user add -u demo --password-stdin`.
 
 Всё, кроме `/api/health`, `/api/health/ready` и `/api/auth/login`, требует cookie сессии
 (`HttpOnly`, `SameSite=Lax`, 30 дней).
@@ -154,7 +154,7 @@ docker compose pull
 docker compose up -d
 docker compose ps            # app должен стать healthy
 
-docker compose exec app todooshka user add -u kirill
+docker compose exec app todooshka user add -u demo
 ```
 
 ### Обновление и откат

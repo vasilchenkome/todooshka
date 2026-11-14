@@ -18,7 +18,7 @@ npm run dev
 ```
 
 The backend uses `sqlite://todooshka.db` by default. Create a user with
-`cargo run -- user add -u kirill`. In development Vite proxies `/api` to
+`cargo run -- user add -u demo`. In development Vite proxies `/api` to
 `http://127.0.0.1:8080`.
 
 ## Before opening a pull request

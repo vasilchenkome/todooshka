@@ -56,11 +56,11 @@ fn session(id_hash: &str, user_id: UserId) -> StoredSession {
 #[tokio::test]
 async fn insert_and_find_user() {
     let db = db().await;
-    let user = add_user(&db, "kirill", "argon2-hash").await;
+    let user = add_user(&db, "demo", "argon2-hash").await;
 
     let found = db
         .users
-        .find_by_username(&username("kirill"))
+        .find_by_username(&username("demo"))
         .await
         .expect("поиск")
         .expect("пользователь есть");
@@ -73,18 +73,18 @@ async fn insert_and_find_user() {
 
     assert_eq!(found, user);
     assert_eq!(by_id, user);
-    assert_eq!(found.username().as_str(), "kirill");
+    assert_eq!(found.username().as_str(), "demo");
     assert_eq!(found.password_hash().as_str(), "argon2-hash");
 }
 
 #[tokio::test]
 async fn duplicate_username_is_conflict() {
     let db = db().await;
-    add_user(&db, "kirill", "argon2-hash").await;
+    add_user(&db, "demo", "argon2-hash").await;
 
     let error = db
         .users
-        .insert(&username("kirill"), &hash("other-hash"), now(300))
+        .insert(&username("demo"), &hash("other-hash"), now(300))
         .await
         .expect_err("дубль логина невозможен");
 
@@ -94,11 +94,11 @@ async fn duplicate_username_is_conflict() {
 #[tokio::test]
 async fn update_password_reports_whether_user_exists() {
     let db = db().await;
-    add_user(&db, "kirill", "argon2-hash").await;
+    add_user(&db, "demo", "argon2-hash").await;
 
     assert!(
         db.users
-            .update_password(&username("kirill"), &hash("new-hash"))
+            .update_password(&username("demo"), &hash("new-hash"))
             .await
             .expect("обновление")
     );
@@ -111,7 +111,7 @@ async fn update_password_reports_whether_user_exists() {
 
     let found = db
         .users
-        .find_by_username(&username("kirill"))
+        .find_by_username(&username("demo"))
         .await
         .expect("поиск")
         .expect("пользователь есть");
@@ -121,7 +121,7 @@ async fn update_password_reports_whether_user_exists() {
 #[tokio::test]
 async fn list_users_is_sorted_by_username() {
     let db = db().await;
-    add_user(&db, "kirill", "hash-a").await;
+    add_user(&db, "demo", "hash-a").await;
     add_user(&db, "anton", "hash-b").await;
 
     let users = db.users.list().await.expect("список");
@@ -131,14 +131,14 @@ async fn list_users_is_sorted_by_username() {
             .iter()
             .map(|user| user.username().as_str())
             .collect::<Vec<_>>(),
-        ["anton", "kirill"]
+        ["anton", "demo"]
     );
 }
 
 #[tokio::test]
 async fn session_roundtrip_and_delete() {
     let db = db().await;
-    let user = add_user(&db, "kirill", "argon2-hash").await;
+    let user = add_user(&db, "demo", "argon2-hash").await;
     let created = session("hash-of-token", user.id());
 
     db.sessions
@@ -166,7 +166,7 @@ async fn session_roundtrip_and_delete() {
 #[tokio::test]
 async fn touch_updates_last_seen_only() {
     let db = db().await;
-    let user = add_user(&db, "kirill", "argon2-hash").await;
+    let user = add_user(&db, "demo", "argon2-hash").await;
     db.sessions
         .create(&session("hash-of-token", user.id()))
         .await
@@ -190,7 +190,7 @@ async fn touch_updates_last_seen_only() {
 #[tokio::test]
 async fn delete_for_user_revokes_every_session() {
     let db = db().await;
-    let user = add_user(&db, "kirill", "argon2-hash").await;
+    let user = add_user(&db, "demo", "argon2-hash").await;
     let other = add_user(&db, "anton", "argon2-hash-2").await;
     db.sessions
         .create(&session("token-one", user.id()))

@@ -234,7 +234,7 @@ async fn login(h: &Harness, username: &str, password: &str) -> Result<String, Ap
 async fn create_user_stores_only_a_hash() {
     let h = harness();
 
-    let user = create_user(&h, "kirill").await;
+    let user = create_user(&h, "demo").await;
 
     assert_eq!(user.password_hash().as_str(), format!("fake:{PASSWORD}"));
     assert_ne!(user.password_hash().as_str(), PASSWORD);
@@ -248,7 +248,7 @@ async fn create_user_rejects_weak_password_before_storage() {
     let error = h
         .service
         .create_user(CreateUser {
-            username: "kirill".to_owned(),
+            username: "demo".to_owned(),
             password: "short".to_owned(),
         })
         .await
@@ -264,12 +264,12 @@ async fn create_user_rejects_weak_password_before_storage() {
 #[tokio::test]
 async fn create_user_rejects_taken_username() {
     let h = harness();
-    create_user(&h, "kirill").await;
+    create_user(&h, "demo").await;
 
     let error = h
         .service
         .create_user(CreateUser {
-            username: "kirill".to_owned(),
+            username: "demo".to_owned(),
             password: PASSWORD.to_owned(),
         })
         .await
@@ -281,12 +281,12 @@ async fn create_user_rejects_taken_username() {
 #[tokio::test]
 async fn login_issues_session_with_hashed_token() {
     let h = harness();
-    let user = create_user(&h, "kirill").await;
+    let user = create_user(&h, "demo").await;
 
     let issued = h
         .service
         .login(Login {
-            username: "kirill".to_owned(),
+            username: "demo".to_owned(),
             password: PASSWORD.to_owned(),
         })
         .await
@@ -310,9 +310,9 @@ async fn login_issues_session_with_hashed_token() {
 #[tokio::test]
 async fn login_does_not_reveal_which_credential_is_wrong() {
     let h = harness();
-    create_user(&h, "kirill").await;
+    create_user(&h, "demo").await;
 
-    let wrong_password = login(&h, "kirill", "another-password").await;
+    let wrong_password = login(&h, "demo", "another-password").await;
     let unknown_user = login(&h, "nobody", PASSWORD).await;
 
     assert_eq!(
@@ -328,8 +328,8 @@ async fn login_does_not_reveal_which_credential_is_wrong() {
 #[tokio::test]
 async fn authenticate_returns_user_for_valid_token() {
     let h = harness();
-    let user = create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    let user = create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     let authenticated = h
         .service
@@ -339,14 +339,14 @@ async fn authenticate_returns_user_for_valid_token() {
         .expect("сессия валидна");
 
     assert_eq!(authenticated.id, user.id());
-    assert_eq!(authenticated.username, "kirill");
+    assert_eq!(authenticated.username, "demo");
 }
 
 #[tokio::test]
 async fn expired_session_is_dropped() {
     let h = harness();
-    create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     h.clock.set(1_000 + SESSION_TTL_SECONDS + 1);
 
@@ -366,8 +366,8 @@ async fn expired_session_is_dropped() {
 #[tokio::test]
 async fn stale_session_activity_is_touched_after_an_hour() {
     let h = harness();
-    create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     h.clock.set(1_000 + SESSION_TOUCH_SECONDS);
     h.service.authenticate(&token).await.expect("проверка");
@@ -381,8 +381,8 @@ async fn stale_session_activity_is_touched_after_an_hour() {
 #[tokio::test]
 async fn fresh_session_is_not_touched() {
     let h = harness();
-    create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     h.clock.set(1_030);
     h.service.authenticate(&token).await.expect("проверка");
@@ -393,8 +393,8 @@ async fn fresh_session_is_not_touched() {
 #[tokio::test]
 async fn logout_removes_session_and_is_idempotent() {
     let h = harness();
-    create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     h.service.logout(&token).await.expect("выход");
     assert!(h.sessions.stored().is_empty());
@@ -412,12 +412,12 @@ async fn logout_removes_session_and_is_idempotent() {
 #[tokio::test]
 async fn password_change_revokes_sessions_and_old_password_stops_working() {
     let h = harness();
-    create_user(&h, "kirill").await;
-    let token = login(&h, "kirill", PASSWORD).await.expect("вход");
+    create_user(&h, "demo").await;
+    let token = login(&h, "demo", PASSWORD).await.expect("вход");
 
     h.service
         .change_password(ChangePassword {
-            username: "kirill".to_owned(),
+            username: "demo".to_owned(),
             password: "brand-new-password".to_owned(),
         })
         .await
@@ -428,10 +428,10 @@ async fn password_change_revokes_sessions_and_old_password_stops_working() {
         "смена пароля разлогинивает все устройства"
     );
     assert!(matches!(
-        login(&h, "kirill", PASSWORD).await,
+        login(&h, "demo", PASSWORD).await,
         Err(ApplicationError::InvalidCredentials)
     ));
-    assert!(login(&h, "kirill", "brand-new-password").await.is_ok());
+    assert!(login(&h, "demo", "brand-new-password").await.is_ok());
     assert!(
         h.service
             .authenticate(&token)
