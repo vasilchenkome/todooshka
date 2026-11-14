@@ -2,12 +2,26 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { Task } from "../../api/types";
-import { formatDay } from "./boardModel";
+import { PRIORITY_LABELS, dueLabel } from "./boardModel";
 
 type TaskCardProps = {
   task: Task;
   number: number;
   onOpen: (task: Task) => void;
+};
+
+const PRIORITY_DOT: Record<Task["priority"], string> = {
+  low: "bg-steel",
+  normal: "",
+  high: "bg-ink",
+  urgent: "bg-signal",
+};
+
+const PRIORITY_TEXT: Record<Task["priority"], string> = {
+  low: "text-steel",
+  normal: "text-steel",
+  high: "text-ink",
+  urgent: "text-signal",
 };
 
 /** Карточка задачи: строка, а не «облако»; номер и дата — табличными цифрами. */
@@ -22,11 +36,15 @@ export function TaskCard({ task, number, onOpen }: TaskCardProps) {
     touchAction: "manipulation" as const,
   };
 
-  const meta = task.completed_at
-    ? "завершена"
-    : task.status === "in_progress"
-      ? "в работе"
-      : "в бэклоге";
+  const due = dueLabel(task.due_on);
+  const dueClass =
+    due.tone === "over"
+      ? "text-signal"
+      : due.tone === "today"
+        ? "font-medium text-ink"
+        : due.tone === "plain"
+          ? "text-ink"
+          : "";
 
   return (
     <li
@@ -49,9 +67,16 @@ export function TaskCard({ task, number, onOpen }: TaskCardProps) {
         >
           {task.title}
         </button>
-        <p className="mt-2 flex justify-between gap-3 text-[12px] text-steel">
-          <span>{meta}</span>
-          <span className="tabular-nums">{formatDay(task.completed_at ?? task.updated_at)}</span>
+        <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+          <span className={`tabular-nums ${dueClass}`}>{due.text}</span>
+          {task.priority !== "normal" && (
+            <span
+              className={`ml-auto flex items-center gap-1.5 whitespace-nowrap ${PRIORITY_TEXT[task.priority]}`}
+            >
+              <span className={`h-[7px] w-[7px] ${PRIORITY_DOT[task.priority]}`} />
+              {PRIORITY_LABELS[task.priority]}
+            </span>
+          )}
         </p>
       </div>
     </li>

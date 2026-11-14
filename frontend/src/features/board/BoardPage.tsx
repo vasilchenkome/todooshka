@@ -14,7 +14,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
-import type { Task, TaskStatus } from "../../api/types";
+import type { Task, TaskPlanning, TaskStatus } from "../../api/types";
 import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { AppBar } from "../../shared/ui/AppBar";
 import { BoardColumn } from "./BoardColumn";
@@ -98,8 +98,17 @@ export default function BoardPage() {
   });
 
   const updateTask = useMutation({
-    mutationFn: (input: { id: number; title: string; description: string }) =>
-      api.updateTask(input.id, { title: input.title, description: input.description }),
+    mutationFn: (input: {
+      id: number;
+      title: string;
+      description: string;
+      planning: TaskPlanning;
+    }) =>
+      api.updateTask(input.id, {
+        title: input.title,
+        description: input.description,
+        planning: input.planning,
+      }),
     onSuccess: (updated) => {
       setDialogTask(updated);
       void queryClient.invalidateQueries({ queryKey: taskKey });

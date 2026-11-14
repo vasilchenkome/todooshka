@@ -1,22 +1,30 @@
 import { useEffect, useState } from "react";
 
-import type { Task, TaskStatus } from "../../api/types";
-import { BOARD_COLUMNS } from "./boardModel";
+import type { Task, TaskPlanning, TaskPriority, TaskStatus } from "../../api/types";
+import { BOARD_COLUMNS, PRIORITY_LABELS, estimateLabel } from "./boardModel";
+
+const PRIORITIES: TaskPriority[] = ["low", "normal", "high", "urgent"];
 
 type TaskDialogProps = {
   task: Task;
   busy: boolean;
   onClose: () => void;
-  onSave: (patch: { title: string; description: string }) => Promise<void>;
+  onSave: (patch: { title: string; description: string; planning: TaskPlanning }) => Promise<void>;
   onMove: (status: TaskStatus) => Promise<void>;
   onDelete: () => Promise<void>;
 };
 
-/** Диалог задачи: правка текста, смена колонки и удаление с подтверждением. */
+/** Диалог задачи: правка текста, планирование, смена колонки и удаление. */
 export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: TaskDialogProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState<TaskStatus>(task.status);
+  const [dueOn, setDueOn] = useState(task.due_on ?? "");
+  const [priority, setPriority] = useState<TaskPriority>(task.priority);
+  const [estimate, setEstimate] = useState(
+    task.estimate_minutes === null ? "" : String(task.estimate_minutes),
+  );
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -27,9 +35,33 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  function estimateMinutes(): number | null {
+    if (estimate.trim() === "") return null;
+    const minutes = Number(estimate);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 100_000) {
+      return Number.NaN;
+    }
+    return minutes;
+  }
+
   async function save() {
+    const minutes = estimateMinutes();
+    if (Number.isNaN(minutes)) {
+      setEstimateError("оценка — целое число минут от 1 до 100000");
+      return;
+    }
+    setEstimateError(null);
+
     try {
-      await onSave({ title, description });
+      await onSave({
+        title,
+        description,
+        planning: {
+          due_on: dueOn || null,
+          priority,
+          estimate_minutes: minutes,
+        },
+      });
       onClose();
     } catch {
       // Ошибка отображается на доске, диалог остаётся открытым.
@@ -59,6 +91,8 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
       // Ошибка отображается на доске.
     }
   }
+
+  const minutes = estimateMinutes();
 
   return (
     <div
@@ -114,7 +148,83 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
           />
         </label>
 
-        <div className="mt-6">
+        <div className="mt-6 grid gap-x-5 gap-y-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-[12px] text-steel">Срок</span>
+            <div className="flex items-end gap-2 border-b border-rule pb-2">
+              <input
+                type="date"
+                value={dueOn}
+                onChange={(event) => setDueOn(event.target.value)}
+                className="w-full bg-transparent text-[14px] tabular-nums outline-none"
+              />
+              {dueOn && (
+                <button
+                  type="button"
+                  onClick={() => setDueOn("")}
+                  className="shrink-0 text-[11px] text-steel hover:text-ink"
+                >
+                  очистить
+                </button>
+              )}
+            </div>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-[12px] text-steel">Оценка, минут</span>
+            <div className="flex items-end gap-2 border-b border-rule pb-2">
+              <input
+                type="number"
+                min={1}
+                max={100000}
+                step={1}
+                inputMode="numeric"
+                placeholder="90"
+                value={estimate}
+                onChange={(event) => {
+                  setEstimate(event.target.value);
+                  setEstimateError(null);
+                }}
+                className="w-full bg-transparent text-[14px] tabular-nums outline-none"
+              />
+              <span className="shrink-0 text-[11px] whitespace-nowrap text-steel">
+                {Number.isNaN(minutes) ? "" : minutes === null ? "не задана" : estimateLabel(minutes)}
+              </span>
+            </div>
+          </label>
+        </div>
+
+        {estimateError && (
+          <p role="alert" className="mt-2 border-l-2 border-signal pl-2 text-[12px]">
+            {estimateError}
+          </p>
+        )}
+
+        <div className="mt-5">
+          <span className="mb-2 block text-[12px] text-steel">Приоритет</span>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-rule">
+            {PRIORITIES.map((value) => {
+              const active = priority === value;
+              const tone = active
+                ? value === "urgent"
+                  ? "border-signal text-signal"
+                  : "border-ink text-ink"
+                : "border-transparent text-steel hover:text-ink";
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setPriority(value)}
+                  className={`-mb-px border-b-2 pb-2 text-[13px] transition-colors ${tone}`}
+                >
+                  {PRIORITY_LABELS[value]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-5">
           <span className="mb-2 block text-[12px] text-steel">Колонка</span>
           <div className="flex gap-5 border-b border-rule">
             {BOARD_COLUMNS.map(({ status: value, title: label }) => (

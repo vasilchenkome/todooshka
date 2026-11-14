@@ -53,6 +53,15 @@ export type ProjectPatch = Partial<
 export const taskStatusSchema = z.enum(["backlog", "in_progress", "done"]);
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
 
+export const taskPrioritySchema = z.enum(["low", "normal", "high", "urgent"]);
+export type TaskPriority = z.infer<typeof taskPrioritySchema>;
+
+export type TaskPlanning = {
+  due_on: string | null;
+  priority: TaskPriority;
+  estimate_minutes: number | null;
+};
+
 export const taskSchema = z.object({
   id: z.number(),
   project_id: z.number(),
@@ -63,12 +72,17 @@ export const taskSchema = z.object({
   created_at: z.number(),
   updated_at: z.number(),
   completed_at: z.number().nullable(),
+  due_on: z.string().nullable(),
+  priority: taskPrioritySchema,
+  estimate_minutes: z.number().nullable(),
 });
 export type Task = z.infer<typeof taskSchema>;
 
 export const taskListSchema = z.array(taskSchema);
 
-export type TaskPatch = Partial<Pick<Task, "title" | "description">>;
+export type TaskPatch = Partial<Pick<Task, "title" | "description">> & {
+  planning?: TaskPlanning;
+};
 
 export type NewTask = {
   title: string;

@@ -1,4 +1,4 @@
-import type { Task, TaskStatus } from "../../api/types";
+import type { Task, TaskPriority, TaskStatus } from "../../api/types";
 
 export const BOARD_COLUMNS: { status: TaskStatus; title: string }[] = [
   { status: "backlog", title: "Бэклог" },
@@ -100,3 +100,62 @@ export function formatDay(unixSeconds: number): string {
     .format(new Date(unixSeconds * 1000))
     .replace(".", "");
 }
+
+const MONTHS = [
+  "янв", "фев", "мар", "апр", "мая", "июн",
+  "июл", "авг", "сен", "окт", "ноя", "дек",
+];
+
+export type DueTone = "over" | "today" | "plain" | "none";
+
+export type DueLabel = {
+  text: string;
+  tone: DueTone;
+};
+
+/** Дата срока в локальном календаре; строка считается календарной датой без времени. */
+function parseDueDate(value: string): Date | null {
+  const parts = value.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+export function dueLabel(dueOn: string | null): DueLabel {
+  if (!dueOn) return { text: "без срока", tone: "none" };
+
+  const date = parseDueDate(dueOn);
+  if (!date) return { text: "без срока", tone: "none" };
+
+  const today = startOfToday();
+  const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
+  const day = date.getDate();
+  const month = MONTHS[date.getMonth()];
+  const sameYear = date.getFullYear() === today.getFullYear();
+  const short = sameYear ? `${day} ${month}` : `${day} ${month} ${date.getFullYear()}`;
+
+  if (days < 0) return { text: `просрочено · ${short}`, tone: "over" };
+  if (days === 0) return { text: "сегодня", tone: "today" };
+  if (days === 1) return { text: "завтра", tone: "plain" };
+  return { text: short, tone: "plain" };
+}
+
+export function estimateLabel(minutes: number | null): string {
+  if (!minutes) return "не задана";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} мин`;
+  if (rest === 0) return `${hours} ч`;
+  return `${hours} ч ${rest} мин`;
+}
+
+export const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: "низкий",
+  normal: "обычный",
+  high: "высокий",
+  urgent: "срочный",
+};
