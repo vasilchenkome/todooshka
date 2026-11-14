@@ -157,7 +157,26 @@ docker compose ps            # app должен стать healthy
 docker compose exec app todooshka user add -u demo
 ```
 
-### Обновление и откат
+### Автодеплой по тегу
+
+Прод обновляется только по версионным тегам. Тег должен совпадать с версией в
+`Cargo.toml`; `release.yml` прогоняет тесты, собирает и публикует образ, затем деплоит его
+по SSH.
+
+```bash
+# после изменения версии в Cargo.toml (и frontend/package.json)
+git commit -am "release: 0.2.0"
+git tag -a v0.2.0 -m "Todooshka 0.2.0"
+git push origin main
+git push origin v0.2.0
+```
+
+Деплой идёт под отдельным пользователем `deploy` с forced command: перед обновлением
+снимается backup базы, после запуска проверяется health и HTTPS, при ошибке скрипт
+возвращает предыдущий тег. В проде не используется `latest`; `TODOOSHKA_TAG` в `.env`
+на VM фиксируется на задеплоенной версии.
+
+### Ручное обновление и откат
 
 ```bash
 git pull
