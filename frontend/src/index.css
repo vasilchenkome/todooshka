@@ -121,3 +121,13 @@
     }
   }
 }
+
+/* Board columns scroll without a visible bar; the focus ring stays. */
+.column-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.column-scroll::-webkit-scrollbar {
+  display: none;
+}

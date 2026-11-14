@@ -18,6 +18,7 @@ export const ru = {
   "page.login": "Вход — todooshka",
   "page.projects": "Проекты — todooshka",
   "page.board": "Доска — todooshka",
+  "page.today": "Сегодня — todooshka",
   "page.project": "{name} — todooshka",
 
   "auth.loginTitle": "Вход",
@@ -27,6 +28,16 @@ export const ru = {
   "auth.signIn": "Войти",
   "auth.signingIn": "вхожу…",
   "auth.loading": "загружаю…",
+
+  "nav.today": "сегодня",
+
+  "today.title": "Сегодня",
+  "today.summary": "{overdue} просрочено · {today} сегодня · {week} на неделе",
+  "today.overdue": "просрочено",
+  "today.today": "сегодня",
+  "today.week": "на неделе",
+  "today.empty": "на сегодня и неделю пусто",
+  "today.toProjects": "к проектам",
 
   "projects.title": "Проекты",
   "projects.summary": "Активных: {active} · в архиве: {archived}. Цифры — задачи по колонкам.",
@@ -47,6 +58,7 @@ export const ru = {
   "project.noTasks": "нет задач",
   "project.progress": "выполнено {done} из {total}",
 
+  "board.statusAria": "Статусы доски",
   "board.backAria": "К проектам",
   "board.back": "проекты",
   "board.fallback": "Доска",

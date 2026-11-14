@@ -227,7 +227,7 @@ export function TaskDialog({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-end justify-center bg-ink/35 p-0 md:items-center md:p-6"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-ink/35 p-0 md:items-center md:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

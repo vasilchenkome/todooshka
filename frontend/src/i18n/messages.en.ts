@@ -20,6 +20,7 @@ export const en = {
   "page.login": "Sign in — todooshka",
   "page.projects": "Projects — todooshka",
   "page.board": "Board — todooshka",
+  "page.today": "Today — todooshka",
   "page.project": "{name} — todooshka",
 
   "auth.loginTitle": "Sign in",
@@ -29,6 +30,16 @@ export const en = {
   "auth.signIn": "Sign in",
   "auth.signingIn": "signing in…",
   "auth.loading": "loading…",
+
+  "nav.today": "today",
+
+  "today.title": "Today",
+  "today.summary": "{overdue} overdue · {today} today · {week} this week",
+  "today.overdue": "overdue",
+  "today.today": "today",
+  "today.week": "this week",
+  "today.empty": "nothing for today or this week",
+  "today.toProjects": "to projects",
 
   "projects.title": "Projects",
   "projects.summary": "Active: {active} · archived: {archived}. Counts are tasks per column.",
@@ -49,6 +60,7 @@ export const en = {
   "project.noTasks": "no tasks",
   "project.progress": "{done} of {total} done",
 
+  "board.statusAria": "Board statuses",
   "board.backAria": "Back to projects",
   "board.back": "projects",
   "board.fallback": "Board",

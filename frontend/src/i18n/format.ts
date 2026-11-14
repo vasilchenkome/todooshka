@@ -37,6 +37,16 @@ export function formatShortDate(date: Date, locale: Locale, includeYear: boolean
     .replace(/\./g, "");
 }
 
+export function formatLongDate(date: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    day: "numeric",
+    month: "long",
+    weekday: "long",
+  })
+    .format(date)
+    .replace(/\./g, "");
+}
+
 export function formatBytes(size: number, locale: Locale): string {
   if (size < 1024) return `${size} ${translate(locale, "unit.byte")}`;
   const kilobytes = size / 1024;

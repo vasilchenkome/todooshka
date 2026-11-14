@@ -163,6 +163,7 @@ export function filterTasks(
   tasks: Task[],
   filters: BoardFilters,
   tagsByTask: Map<number, string[]>,
+  now = new Date(),
 ): Task[] {
   const query = filters.query.trim().toLowerCase();
 
@@ -177,7 +178,7 @@ export function filterTasks(
     if (filters.priority && task.priority !== filters.priority) return false;
 
     if (filters.due) {
-      const bucket = dueBucket(task.due_on);
+      const bucket = dueBucket(task.due_on, now);
       if (filters.due === "none" && bucket !== "none") return false;
       if (filters.due === "overdue" && bucket !== "overdue") return false;
       if (filters.due === "today" && bucket !== "today") return false;
