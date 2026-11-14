@@ -163,7 +163,8 @@ docker compose exec app todooshka user add -u demo
 
 Production deploys only from version tags. The tag must match the workspace version in
 `Cargo.toml`; `release.yml` runs the tests, builds and publishes the image, then deploys it
-over SSH.
+over SSH. Add the matching version section to `CHANGELOG.md` before tagging; the image job
+fails if the section is missing.
 
 ```bash
 # after bumping Cargo.toml (and frontend/package.json)

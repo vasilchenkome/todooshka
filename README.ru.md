@@ -161,7 +161,8 @@ docker compose exec app todooshka user add -u demo
 
 Прод обновляется только по версионным тегам. Тег должен совпадать с версией в
 `Cargo.toml`; `release.yml` прогоняет тесты, собирает и публикует образ, затем деплоит его
-по SSH.
+по SSH. Перед тегом добавь секцию версии в `CHANGELOG.md`; без неё job сборки образа
+завершится ошибкой.
 
 ```bash
 # после изменения версии в Cargo.toml (и frontend/package.json)
