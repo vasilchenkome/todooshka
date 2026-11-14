@@ -1,5 +1,4 @@
 use std::env;
-use std::io;
 use std::net::{AddrParseError, SocketAddr};
 
 /// Адрес для локальной разработки; в контейнере задаётся `BIND_ADDR=0.0.0.0:8080`.
@@ -17,18 +16,8 @@ pub enum StartupError {
         source: AddrParseError,
     },
 
-    #[error("не удалось занять {addr}: {source}")]
-    Bind {
-        addr: SocketAddr,
-        #[source]
-        source: io::Error,
-    },
-
     #[error("хранилище не готово: {0}")]
     Storage(#[from] todooshka_sqlite::StorageError),
-
-    #[error("сервер остановился с ошибкой: {0}")]
-    Serve(#[source] io::Error),
 }
 
 /// Читает адрес из окружения и валидирует его до bind: ошибка конфига видна сразу.
