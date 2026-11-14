@@ -11,5 +11,6 @@ axum.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 todooshka-http.workspace = true
+todooshka-sqlite.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

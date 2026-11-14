@@ -19,6 +19,11 @@ async fn main() -> ExitCode {
 }
 
 async fn run() -> Result<(), config::StartupError> {
+    let database_url = config::database_url();
+    let pool = todooshka_sqlite::connect(&database_url).await?;
+    todooshka_sqlite::migrate(&pool).await?;
+    tracing::info!("миграции применены");
+
     let addr = config::bind_addr()?;
     let listener = tokio::net::TcpListener::bind(addr)
         .await
@@ -29,7 +34,10 @@ async fn run() -> Result<(), config::StartupError> {
     axum::serve(listener, todooshka_http::router())
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .map_err(config::StartupError::Serve)
+        .map_err(config::StartupError::Serve)?;
+
+    pool.close().await;
+    Ok(())
 }
 
 async fn shutdown_signal() {
