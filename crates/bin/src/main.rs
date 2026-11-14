@@ -16,13 +16,14 @@ use std::time::Duration;
 use async_trait::async_trait;
 use sqlx::SqlitePool;
 use todooshka_app::{
-    AttachmentService, AuthService, ChangePassword, Clock, CommentService, CreateUser,
-    ProjectRepository, ProjectService, SubtaskService, TagService, TaskService, TaskStore,
+    AgendaService, AttachmentService, AuthService, ChangePassword, Clock, CommentService,
+    CreateUser, ProjectRepository, ProjectService, SubtaskService, TagService, TaskService,
+    TaskStore,
 };
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter};
 use todooshka_sqlite::{
-    SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTags,
-    SqliteTasks, SqliteUsers,
+    SqliteAgenda, SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions,
+    SqliteSubtasks, SqliteTags, SqliteTasks, SqliteUsers,
 };
 
 use crate::clock::SystemClock;
@@ -139,6 +140,9 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         projects_repository,
         Arc::clone(&clock),
     ));
+    let agenda = Arc::new(AgendaService::new(Arc::new(SqliteAgenda::new(
+        pool.clone(),
+    ))));
     let subtasks = Arc::new(SubtaskService::new(
         Arc::new(SqliteSubtasks::new(pool.clone())),
         Arc::clone(&clock),
@@ -163,6 +167,7 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
     let state = AppState {
         projects,
         tasks,
+        agenda,
         subtasks,
         tags,
         comments,

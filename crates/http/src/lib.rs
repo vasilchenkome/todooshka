@@ -2,6 +2,7 @@
 //!
 //! Handlers only translate a request into a use-case call and back; no business rules here.
 
+mod agenda;
 pub mod assets;
 mod attachments;
 pub mod auth;
@@ -41,6 +42,7 @@ pub fn router(state: AppState) -> Router {
     let protected = Router::new()
         .route("/auth/logout", post(auth::logout))
         .route("/auth/me", get(auth::me))
+        .route("/agenda", get(agenda::get))
         .route("/projects", get(projects::list).post(projects::create))
         .route(
             "/projects/{id}",

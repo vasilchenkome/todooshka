@@ -2,6 +2,7 @@
 //!
 //! SQL, row-to-domain mapping and transactions live here; no business rules.
 
+mod agenda;
 mod attachments;
 mod backup;
 mod comments;
@@ -16,6 +17,7 @@ mod tags;
 mod tasks;
 mod users;
 
+pub use agenda::SqliteAgenda;
 pub use attachments::SqliteAttachments;
 pub use backup::backup_to;
 pub use comments::SqliteComments;
