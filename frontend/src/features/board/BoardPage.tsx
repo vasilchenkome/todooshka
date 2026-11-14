@@ -15,6 +15,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
 import type { Task, TaskStatus } from "../../api/types";
+import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { AppBar } from "../../shared/ui/AppBar";
 import { BoardColumn } from "./BoardColumn";
 import { TaskDialog } from "./TaskDialog";
@@ -35,6 +36,7 @@ export default function BoardPage() {
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
   const project = projects.data?.find((item) => item.id === id);
+  usePageTitle(project ? `${project.name} — todooshka` : "Доска — todooshka");
 
   const tasksQuery = useQuery({
     queryKey: taskKey,

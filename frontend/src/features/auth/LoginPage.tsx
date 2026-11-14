@@ -5,10 +5,12 @@ import { Navigate } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { Brand } from "../../shared/ui/Brand";
 import { Field } from "../../shared/ui/Field";
+import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { useAuth } from "./AuthContext";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
+  usePageTitle("Вход — todooshka");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

@@ -87,6 +87,12 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                if (title.trim() && !busy) void save();
+              }
+            }}
             className="w-full border-b border-rule bg-transparent pb-2 font-display text-[20px] font-semibold tracking-[-0.01em] outline-none focus:border-signal"
           />
         </label>
@@ -97,6 +103,12 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
             value={description}
             rows={4}
             onChange={(event) => setDescription(event.target.value)}
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                event.preventDefault();
+                if (title.trim() && !busy) void save();
+              }
+            }}
             placeholder="детали, ссылки, что учесть"
             className="w-full resize-y border border-rule bg-transparent p-3 text-[14px] outline-none focus:border-signal"
           />

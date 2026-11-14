@@ -116,7 +116,7 @@ export function ProjectRow({
           <span className="block h-0.5 bg-ink" style={{ width: `${doneShare}%` }} />
         </span>
         <em className="mt-1.5 block text-[11px] text-steel not-italic tabular-nums">
-          {counts.done} из {total} задач
+          {total === 0 ? "нет задач" : `${counts.done} из ${total} задач`}
         </em>
       </div>
     </li>

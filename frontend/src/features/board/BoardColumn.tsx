@@ -80,6 +80,9 @@ export function BoardColumn({
       </div>
 
       <SortableContext items={visible.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        {tasks.length === 0 && (
+          <p className="mx-4 mt-4 text-[13px] text-steel">пусто — добавь задачу или перетащи сюда</p>
+        )}
         <ul className="mt-0 flex-1">
           {visible.map((task) => (
             <TaskCard

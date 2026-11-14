@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
 import type { ProjectPatch } from "../../api/types";
+import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { AppBar } from "../../shared/ui/AppBar";
 import { ProjectRow } from "./ProjectRow";
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  usePageTitle("Проекты — todooshka");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [showArchived, setShowArchived] = useState(false);
