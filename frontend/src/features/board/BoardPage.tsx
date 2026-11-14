@@ -376,7 +376,7 @@ export default function BoardPage() {
 
         <div className="sticky top-[60px] z-10 shrink-0 bg-paper">
           <div className="flex border-b border-rule md:hidden">
-            <nav className="flex min-w-0 flex-1 gap-5 overflow-x-auto px-4" aria-label={t("board.statusAria")}>
+            <nav className="mobile-tabs flex min-w-0 flex-1 gap-5 overflow-x-auto overflow-y-hidden px-4" aria-label={t("board.statusAria")}>
               {BOARD_COLUMNS.map((status) => (
                 <button
                   key={status}
