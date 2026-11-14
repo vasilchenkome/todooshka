@@ -46,6 +46,11 @@ impl From<ApplicationError> for ApiError {
                 "not_found",
                 format!("проект {id} не найден"),
             ),
+            ApplicationError::TaskNotFound(id) => Self::new(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("задача {id} не найдена"),
+            ),
             ApplicationError::Repository(RepositoryError::Conflict(message)) => {
                 Self::new(StatusCode::CONFLICT, "write_conflict", message)
             }

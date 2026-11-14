@@ -6,7 +6,9 @@
 mod error;
 mod ports;
 mod projects;
+mod tasks;
 
 pub use error::{ApplicationError, RepositoryError};
-pub use ports::{Clock, ProjectRepository};
+pub use ports::{Clock, ProjectRepository, TaskStore, TaskTransaction};
 pub use projects::{CreateProject, ProjectService, UpdateProject};
+pub use tasks::{AddTask, EditTask, MoveTask, TaskService};

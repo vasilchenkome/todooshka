@@ -226,6 +226,13 @@ impl Task {
         Ok(())
     }
 
+    /// Перенос внутри колонки — только позиция, без смены статуса и меток.
+    pub fn place_at(&mut self, position: f64) -> Result<(), DomainError> {
+        ensure_position(position)?;
+        self.position = position;
+        Ok(())
+    }
+
     pub fn id(&self) -> TaskId {
         self.id
     }
