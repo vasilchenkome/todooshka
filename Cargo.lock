@@ -1650,7 +1650,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "todooshka"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1672,7 +1672,7 @@ dependencies = [
 
 [[package]]
 name = "todooshka-app"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "thiserror",
@@ -1682,14 +1682,14 @@ dependencies = [
 
 [[package]]
 name = "todooshka-domain"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "todooshka-http"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "axum",
@@ -1709,7 +1709,7 @@ dependencies = [
 
 [[package]]
 name = "todooshka-sqlite"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "sqlx",
