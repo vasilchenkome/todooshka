@@ -12,4 +12,19 @@ pub enum DomainError {
 
     #[error("цвет должен быть в формате #RRGGBB, получено {0:?}")]
     InvalidProjectColor(String),
+
+    #[error("заголовок задачи не может быть пустым")]
+    EmptyTaskTitle,
+
+    #[error("заголовок задачи длиннее {max} символов")]
+    TaskTitleTooLong { max: usize },
+
+    #[error("описание задачи длиннее {max} символов")]
+    TaskDescriptionTooLong { max: usize },
+
+    #[error("позиция задачи должна быть конечным числом")]
+    InvalidTaskPosition,
+
+    #[error("статус задачи и время завершения не согласованы")]
+    TaskCompletionInconsistent,
 }
