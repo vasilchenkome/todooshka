@@ -90,6 +90,10 @@ pub async fn delete(
 
 /// Коды статусов — часть контракта API; всё остальное считаем ошибкой формата.
 fn parse_status(code: &str) -> Result<TaskStatus, ApiError> {
-    TaskStatus::from_code(code)
-        .ok_or_else(|| ApiError::validation(format!("неизвестный статус задачи {code:?}")))
+    TaskStatus::from_code(code).ok_or_else(|| {
+        ApiError::validation_localized(
+            format!("неизвестный статус задачи {code:?}"),
+            format!("unknown task status {code:?}"),
+        )
+    })
 }

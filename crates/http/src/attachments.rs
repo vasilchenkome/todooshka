@@ -28,26 +28,33 @@ pub async fn upload(
 ) -> Result<(StatusCode, Json<AttachmentDto>), ApiError> {
     let mut uploaded = None;
 
-    while let Some(field) = multipart
-        .next_field()
-        .await
-        .map_err(|error| ApiError::validation(format!("не удалось прочитать файл: {error}")))?
-    {
+    while let Some(field) = multipart.next_field().await.map_err(|error| {
+        ApiError::validation_localized(
+            format!("не удалось прочитать файл: {error}"),
+            format!("could not read the file: {error}"),
+        )
+    })? {
         if field.name() != Some("file") {
             continue;
         }
 
         let filename = field.file_name().unwrap_or_default().to_owned();
-        let data = field
-            .bytes()
-            .await
-            .map_err(|error| ApiError::validation(format!("не удалось прочитать файл: {error}")))?;
+        let data = field.bytes().await.map_err(|error| {
+            ApiError::validation_localized(
+                format!("не удалось прочитать файл: {error}"),
+                format!("could not read the file: {error}"),
+            )
+        })?;
         uploaded = Some((filename, data.to_vec()));
         break;
     }
 
-    let (filename, data) =
-        uploaded.ok_or_else(|| ApiError::validation("прикрепите файл в поле file"))?;
+    let (filename, data) = uploaded.ok_or_else(|| {
+        ApiError::validation_localized(
+            "прикрепите файл в поле file",
+            "attach a file in the file field",
+        )
+    })?;
 
     let meta = state
         .attachments

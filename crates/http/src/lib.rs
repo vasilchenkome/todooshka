@@ -9,6 +9,7 @@ mod comments;
 mod dto;
 mod error;
 mod health;
+mod locale;
 mod projects;
 mod state;
 mod subtasks;
@@ -94,6 +95,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .nest("/api", api)
         .fallback(assets::serve)
+        .layer(middleware::from_fn(locale::with_locale))
         .layer(DefaultBodyLimit::max(1024 * 1024))
         .layer(TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
@@ -102,5 +104,10 @@ pub fn router(state: AppState) -> Router {
 }
 
 async fn api_not_found() -> impl IntoResponse {
-    ApiError::not_found("маршрут не найден")
+    ApiError::localized(
+        StatusCode::NOT_FOUND,
+        "not_found",
+        "маршрут не найден",
+        "route not found",
+    )
 }

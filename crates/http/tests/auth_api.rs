@@ -1,7 +1,9 @@
 mod support;
 
-use axum::http::{Method, StatusCode, header};
+use axum::body::Body;
+use axum::http::{Method, Request, StatusCode, header};
 use serde_json::json;
+use tower::ServiceExt;
 
 use support::{PASSWORD, USERNAME, app, read_json, request, request_anon, send};
 
@@ -29,6 +31,32 @@ async fn health_and_login_are_public() {
     assert_eq!(health_status, StatusCode::OK);
     assert_eq!(login_status, StatusCode::OK);
     assert_eq!(body["user"]["username"], USERNAME);
+}
+
+#[tokio::test]
+async fn login_error_is_english_with_accept_language() {
+    let app = app().await;
+    let response = app
+        .router
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/auth/login")
+                .header(header::CONTENT_TYPE, "application/json")
+                .header(header::ACCEPT_LANGUAGE, "en-US,en;q=0.9")
+                .body(Body::from(
+                    json!({ "username": USERNAME, "password": "wrong" }).to_string(),
+                ))
+                .expect("запрос"),
+        )
+        .await
+        .expect("ответ");
+    let (status, body) = read_json(response).await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body["error"]["code"], "invalid_credentials");
+    assert_eq!(body["error"]["message"], "wrong username or password");
 }
 
 #[tokio::test]

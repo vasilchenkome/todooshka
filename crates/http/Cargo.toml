@@ -14,6 +14,7 @@ serde.workspace = true
 todooshka-app.workspace = true
 todooshka-domain.workspace = true
 tower-http.workspace = true
+tokio.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]

@@ -79,7 +79,12 @@ pub async fn require_session(
 ) -> Result<Response, ApiError> {
     let token = session_token(request.headers()).unwrap_or_default();
     let Some(user) = state.auth.authenticate(&token).await? else {
-        return Err(ApiError::unauthorized("требуется вход"));
+        return Err(ApiError::localized(
+            StatusCode::UNAUTHORIZED,
+            "unauthorized",
+            "требуется вход",
+            "sign in required",
+        ));
     };
 
     request.extensions_mut().insert(user);
