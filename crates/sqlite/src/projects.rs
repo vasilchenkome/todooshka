@@ -5,6 +5,8 @@ use todooshka_domain::{
     Project, ProjectColor, ProjectDraft, ProjectId, ProjectName, ProjectSnapshot, Timestamp,
 };
 
+use crate::mapping::{corrupted, unavailable};
+
 /// SQLite-реализация порта проектов: SQL, маппинг строк, без бизнес-правил.
 pub struct SqliteProjects {
     pool: SqlitePool,
@@ -50,14 +52,6 @@ impl ProjectRow {
 
         Project::restore(snapshot).map_err(corrupted)
     }
-}
-
-fn corrupted(error: impl std::fmt::Display) -> RepositoryError {
-    RepositoryError::Corrupted(error.to_string())
-}
-
-fn unavailable(error: sqlx::Error) -> RepositoryError {
-    RepositoryError::Unavailable(error.to_string())
 }
 
 #[async_trait]
