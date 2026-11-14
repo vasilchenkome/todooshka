@@ -56,6 +56,7 @@ export const en = {
   "board.searchAria": "Search tasks",
   "board.priorityAny": "priority: any",
   "board.dueAny": "due: any",
+  "board.dueToday": "today",
   "board.dueOverdue": "overdue",
   "board.dueWeek": "next 7 days",
   "board.dueNone": "no due date",
@@ -84,6 +85,8 @@ export const en = {
   "due.tomorrow": "tomorrow",
   "due.overdue": "overdue · {date}",
 
+  "card.completedOn": "completed {date}",
+  "card.completed": "done",
   "card.checklist": "checklist {done}/{total}",
 
   "estimate.none": "not set",

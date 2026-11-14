@@ -394,6 +394,7 @@ export default function BoardPage() {
           >
             <option value="">{t("board.dueAny")}</option>
             <option value="overdue">{t("board.dueOverdue")}</option>
+            <option value="today">{t("board.dueToday")}</option>
             <option value="week">{t("board.dueWeek")}</option>
             <option value="none">{t("board.dueNone")}</option>
           </select>

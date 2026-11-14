@@ -54,8 +54,9 @@ export const ru = {
   "board.searchAria": "Поиск по задачам",
   "board.priorityAny": "приоритет: любой",
   "board.dueAny": "срок: любой",
+  "board.dueToday": "сегодня",
   "board.dueOverdue": "просрочено",
-  "board.dueWeek": "на неделю",
+  "board.dueWeek": "следующие 7 дней",
   "board.dueNone": "без срока",
   "board.tagAll": "тег: все",
   "board.reset": "сбросить",
@@ -82,6 +83,8 @@ export const ru = {
   "due.tomorrow": "завтра",
   "due.overdue": "просрочено · {date}",
 
+  "card.completedOn": "выполнено {date}",
+  "card.completed": "готово",
   "card.checklist": "чек-лист {done}/{total}",
 
   "estimate.none": "не задана",

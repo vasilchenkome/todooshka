@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import type { Task } from "../../api/types";
 import { useI18n } from "../../i18n";
-import { dueLabel, priorityLabel } from "./boardModel";
+import { dueLabel, formatDay, priorityLabel } from "./boardModel";
 
 type TaskCardProps = {
   task: Task;
@@ -50,7 +50,13 @@ export function TaskCard({
     touchAction: "manipulation" as const,
   };
 
+  const isDone = task.status === "done";
   const due = dueLabel(task.due_on, locale);
+  const completed = isDone
+    ? task.completed_at
+      ? t("card.completedOn", { date: formatDay(task.completed_at, locale) })
+      : t("card.completed")
+    : null;
   const dueClass =
     due.tone === "over"
       ? "text-signal"
@@ -82,7 +88,11 @@ export function TaskCard({
           {task.title}
         </button>
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
-          <span className={`tabular-nums ${dueClass}`}>{due.text}</span>
+          {completed ? (
+            <span className="tabular-nums">{completed}</span>
+          ) : (
+            <span className={`tabular-nums ${dueClass}`}>{due.text}</span>
+          )}
           {subtasks && subtasks.total > 0 && (
             <span className="whitespace-nowrap tabular-nums">
               {t("card.checklist", { done: subtasks.done, total: subtasks.total })}
