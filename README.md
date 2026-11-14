@@ -119,11 +119,11 @@ cookie (`HttpOnly`, `SameSite=Lax`, 30 days).
 ## Tests
 
 ```bash
+cd frontend && npm ci && npm run build && cd ..
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ./scripts/check-boundaries.sh
-cd frontend && npm run build
 ```
 
 ## Docker and deployment
@@ -159,7 +159,26 @@ docker compose ps            # app should become healthy
 docker compose exec app todooshka user add -u demo
 ```
 
-### Update and rollback
+### Automatic deploy by tag
+
+Production deploys only from version tags. The tag must match the workspace version in
+`Cargo.toml`; `release.yml` runs the tests, builds and publishes the image, then deploys it
+over SSH.
+
+```bash
+# after bumping Cargo.toml (and frontend/package.json)
+git commit -am "release: 0.2.0"
+git tag -a v0.2.0 -m "Todooshka 0.2.0"
+git push origin main
+git push origin v0.2.0
+```
+
+The deploy job uses a separate `deploy` SSH user with a forced command, takes a database
+backup before updating, waits for the container health check, checks HTTPS, and rolls back to
+the previous tag on failure. `latest` is not used in production; `TODOOSHKA_TAG` in the VM
+`.env` is pinned to the deployed version.
+
+### Manual update and rollback
 
 ```bash
 git pull
