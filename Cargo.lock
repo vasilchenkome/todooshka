@@ -1826,7 +1826,7 @@ dependencies = [
  "hex",
  "rand_core",
  "rpassword",
- "sha2 0.10.9",
+ "sha2 0.11.1",
  "sqlx",
  "thiserror",
  "todooshka-app",
