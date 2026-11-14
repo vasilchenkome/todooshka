@@ -49,3 +49,29 @@ export type ProjectInput = {
 export type ProjectPatch = Partial<
   Pick<Project, "name" | "description" | "color" | "archived">
 >;
+
+export const taskStatusSchema = z.enum(["backlog", "in_progress", "done"]);
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
+
+export const taskSchema = z.object({
+  id: z.number(),
+  project_id: z.number(),
+  title: z.string(),
+  description: z.string(),
+  status: taskStatusSchema,
+  position: z.number(),
+  created_at: z.number(),
+  updated_at: z.number(),
+  completed_at: z.number().nullable(),
+});
+export type Task = z.infer<typeof taskSchema>;
+
+export const taskListSchema = z.array(taskSchema);
+
+export type TaskPatch = Partial<Pick<Task, "title" | "description">>;
+
+export type NewTask = {
+  title: string;
+  description?: string;
+  status?: TaskStatus;
+};

@@ -3,10 +3,16 @@ import {
   loginResponseSchema,
   projectListSchema,
   projectSchema,
+  taskListSchema,
+  taskSchema,
   userSchema,
+  type NewTask,
   type Project,
   type ProjectInput,
   type ProjectPatch,
+  type Task,
+  type TaskPatch,
+  type TaskStatus,
   type User,
 } from "./types";
 
@@ -79,4 +85,33 @@ export const api = {
       { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(patch) },
       (data) => projectSchema.parse(data),
     ),
+
+  listTasks: (projectId: number): Promise<Task[]> =>
+    request(`/api/projects/${projectId}/tasks`, { method: "GET" }, (data) =>
+      taskListSchema.parse(data),
+    ),
+
+  createTask: (projectId: number, input: NewTask): Promise<Task> =>
+    request(
+      `/api/projects/${projectId}/tasks`,
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify(input) },
+      (data) => taskSchema.parse(data),
+    ),
+
+  updateTask: (id: number, patch: TaskPatch): Promise<Task> =>
+    request(
+      `/api/tasks/${id}`,
+      { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(patch) },
+      (data) => taskSchema.parse(data),
+    ),
+
+  moveTask: (id: number, status: TaskStatus, targetIndex: number): Promise<Task> =>
+    request(
+      `/api/tasks/${id}/move`,
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ status, target_index: targetIndex }) },
+      (data) => taskSchema.parse(data),
+    ),
+
+  deleteTask: (id: number): Promise<void> =>
+    request(`/api/tasks/${id}`, { method: "DELETE" }, () => undefined),
 };
