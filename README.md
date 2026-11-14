@@ -1,184 +1,239 @@
 # Todooshka
 
-Личный Kanban по рабочим проектам: backend на Rust (axum + SQLite), фронт на React + TypeScript.
+A self-hosted Kanban board for personal work projects. The backend is Rust (axum + SQLite),
+the interface is React + TypeScript. One binary serves both the API and the SPA.
 
-Сделаны MVP и вторая волна: проекты, доска с drag&drop, сроки, четыре приоритета, оценка,
-чек-листы, теги, поиск и фильтры, комментарии и вложения. Вход по cookie-сессии, один
-пользователь. Образ собирается в GitHub Actions, VM тянет его из GHCR. Планы — `docs/plans/`
-(локально, `docs/` в `.gitignore`).
+![Todooshka board](assets/board.png)
 
-## Возможности
+[![ci](https://github.com/vasilchenkome/todooshka/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/vasilchenkome/todooshka/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- Проекты: создание, переименование, архив и возврат, счётчики задач по колонкам.
-- Доска: три колонки, drag&drop мышью и пальцем, перенос между колонками и внутри колонки.
-- Планирование: срок (календарная дата, локальная просрочка), приоритеты низкий/обычный/
-  высокий/срочный, оценка в минутах.
-- Чек-лист задачи с прогрессом на карточке.
-- Теги, поиск по заголовку и описанию, фильтры по приоритету, сроку и тегу; состояние в URL.
-- Комментарии с правкой и удалением.
-- Вложения до 10 МБ, не больше 10 на задачу; хранятся в SQLite и попадают в бэкап.
+## What it is
 
-## Структура
+Todooshka is built for one person who wants a small, fast board for their own projects:
+no accounts, no sign-up, no cloud, no workspace administration. You run it yourself,
+create one user, and keep the data in a single SQLite file.
 
-| Крейт | Слой |
+It is intentionally **not**:
+
+- a multi-user or team product;
+- a SaaS with public registration;
+- a Jira/Trello replacement with integrations, workflows, or reporting;
+- a mobile app — the web interface works on a phone and tablet, but there is no native client.
+
+## Features
+
+- Projects: create, rename, archive, restore; task counters per column.
+- Board: Backlog / In Progress / Done, drag and drop with a mouse or a finger, reordering.
+- Planning: calendar due date, four priorities, time estimate in minutes.
+- Checklists with progress on the card.
+- Tags, text search, filters by priority, due date, and tag; filter state lives in the URL.
+- Comments with editing and deletion.
+- Attachments up to 10 MB, at most 10 per task. Files are stored in SQLite, so they are included
+  in a regular database backup.
+- Russian and English interface; the language is detected from the browser and can be switched
+  in the header.
+- Single-user authentication with a password and an HttpOnly session cookie.
+- The application never exposes its internal port when deployed with the bundled Caddy setup.
+
+## Stack
+
+| Layer | Choice |
 |---|---|
-| `todooshka-domain` | сущности, инварианты, переходы статусов |
-| `todooshka-app` | use cases и порты к инфраструктуре |
-| `todooshka-sqlite` | репозитории, транзакции, миграции |
-| `todooshka-http` | axum-роутер, DTO, middleware, статика |
-| `todooshka` | composition root, конфигурация, запуск |
+| Backend | Rust 1.88+, axum, tokio, SQLite via sqlx |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4 |
+| State and forms | TanStack Query, zod |
+| Drag and drop | dnd-kit |
+| Deployment | Docker Compose, Caddy with automatic HTTPS |
 
-`frontend/` — Vite + React, в разработке проксирует `/api` на бэкенд.
+## Architecture
 
-## Разработка
+The backend is split into five crates. Dependencies point inward; `domain` and `application`
+know nothing about axum, sqlx, tokio, or the HTTP wire format.
+
+| Crate | Responsibility |
+|---|---|
+| `todooshka-domain` | entities, invariants, status transitions, ordering rules |
+| `todooshka-app` | use cases and ports required from infrastructure |
+| `todooshka-sqlite` | repositories, transactions, migrations |
+| `todooshka-http` | axum router, DTOs, middleware, embedded SPA |
+| `todooshka` | composition root, configuration, CLI, server startup |
+
+`frontend/` is a Vite application. In development Vite proxies `/api` to the backend; in a
+release build the frontend assets are embedded into the Rust binary.
+
+The boundary rule is checked in CI and locally:
 
 ```bash
-# backend: http://127.0.0.1:8080
+./scripts/check-boundaries.sh
+```
+
+## Quick start
+
+Requirements: Rust 1.88 or newer, Node.js 22 or newer, npm.
+
+```bash
+# 1. Create the only user (runs against the same SQLite file)
+cargo run -- user add -u kirill
+
+# 2. Backend on http://127.0.0.1:8080
 cargo run
 
-# frontend: http://localhost:5173
+# 3. Frontend on http://localhost:5173
 cd frontend
 npm install
 npm run dev
 ```
 
-Окружение:
+The backend uses `sqlite://todooshka.db` by default. The schema prefix is required: a bare file
+path is rejected at startup instead of being silently treated as a database name.
 
-| Переменная | По умолчанию | Назначение |
+## Configuration
+
+| Variable | Default | Purpose |
 |---|---|---|
-| `BIND_ADDR` | `127.0.0.1:8080` | адрес сервера; в контейнере `0.0.0.0:8080` |
-| `DATABASE_URL` | `sqlite://todooshka.db` | файл базы; схема обязательна (`sqlite://`), иначе старт падает |
-| `COOKIE_SECURE` | `false` | `true` — когда приложение за HTTPS: cookie получает флаг `Secure` (в compose по умолчанию `true`) |
-| `RUST_LOG` | `info` | уровень логов |
-| `LOG_FORMAT` | `text` | `json` — структурированные логи для контейнера |
+| `BIND_ADDR` | `127.0.0.1:8080` | Server address; in a container use `0.0.0.0:8080` |
+| `DATABASE_URL` | `sqlite://todooshka.db` | SQLite file; in a container `sqlite:///data/todooshka.db` |
+| `COOKIE_SECURE` | `false` | `true` when served over HTTPS: the session cookie gets `Secure` |
+| `RUST_LOG` | `info` | Log level |
+| `LOG_FORMAT` | `text` | `json` for structured container logs |
 
-## Пользователи
+## CLI
 
-Учётная запись создаётся только из CLI, до или во время работы сервера на той же базе:
+The account is created from the CLI, against the same database the server uses:
 
 ```bash
-todooshka user add -u kirill      # пароль вводится скрыто и дважды
-todooshka user passwd -u kirill   # смена пароля отзывает все сессии
+todooshka user add -u kirill      # password is read twice, hidden
+todooshka user passwd -u kirill   # changing it revokes all sessions
 todooshka user list
-todooshka healthcheck             # 0, если /api/health/ready отвечает 200
-todooshka backup ./copy.db        # копия базы + integrity_check
+todooshka healthcheck             # 0 when /api/health/ready returns 200
+todooshka backup ./copy.db        # VACUUM INTO + integrity_check
 ```
 
-Для скриптов и контейнера пароль передаётся одной строкой: `todooshka user add -u kirill --password-stdin`.
-Всё, кроме `/api/health` и `/api/auth/login`, требует cookie сессии (`HttpOnly`, `SameSite=Lax`, 30 дней).
+For scripts and containers, pass the password as one line:
+`todooshka user add -u kirill --password-stdin`.
 
-## Проверки
+Everything except `/api/health`, `/api/health/ready`, and `/api/auth/login` requires a session
+cookie (`HttpOnly`, `SameSite=Lax`, 30 days).
+
+## Tests
 
 ```bash
-cargo test
-./scripts/check-boundaries.sh   # domain/application не тянут axum/sqlx/tokio
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+./scripts/check-boundaries.sh
 cd frontend && npm run build
 ```
 
-## Docker и запуск на VM
+## Docker and deployment
 
-Один бинарь отдаёт и API, и интерфейс: отдельный nginx не нужен, статика вшита в release-сборку.
-Образ собирает GitHub Actions при каждом пуше в `main` и публикует в GHCR:
+The release image contains the API and the interface; no separate nginx is needed. GitHub
+Actions builds the image on every push to `main` and publishes it to GHCR:
 
-```
+```text
 ghcr.io/vasilchenkome/todooshka:latest
-ghcr.io/vasilchenkome/todooshka:sha-<короткий коммит>
-ghcr.io/vasilchenkome/todooshka:<версия из Cargo.toml>
+ghcr.io/vasilchenkome/todooshka:sha-<short-commit>
+ghcr.io/vasilchenkome/todooshka:<version-from-Cargo.toml>
 ```
 
-Пакет публичный: VM тянет образ без логина в GHCR, репозиторий при этом остаётся приватным.
+The production compose file runs two services: the application and Caddy. Caddy owns ports
+80 and 443, obtains a Let's Encrypt certificate automatically, redirects HTTP to HTTPS, and
+proxies to the application over the internal Docker network. The application port is not
+published.
 
 ```bash
-# первый запуск на VM
 git clone git@github.com:vasilchenkome/todooshka.git /opt/todooshka
 cd /opt/todooshka
+
+cat > .env <<'EOF'
+TODOOSHKA_DOMAIN=todo.example.org
+TODOOSHKA_TAG=latest
+COOKIE_SECURE=true
+EOF
+
 docker compose pull
 docker compose up -d
-docker compose ps            # app должен стать healthy
+docker compose ps            # app should become healthy
 
-# создать пользователя (пароль вводится скрыто, дважды)
 docker compose exec app todooshka user add -u kirill
 ```
 
-Сервис доступен только через Caddy на `https://<домен>`; порт приложения 8080 не публикуется
-наружу, Caddy ходит к нему по внутренней сети Docker. В `.env` рядом с compose задаются
-`TODOOSHKA_DOMAIN` (обязательно), `TODOOSHKA_TAG` (по умолчанию `latest`) и `COOKIE_SECURE`
-(по умолчанию `true`). Приложение пишет JSON-логи (`LOG_FORMAT=json`):
-
-```bash
-docker compose logs -f app
-```
-
-Собрать образ на месте без CI можно так (нужен Docker и исходники):
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.build.yml build
-```
-
-### Обновление и откат
+### Update and rollback
 
 ```bash
 git pull
 docker compose pull
 docker compose up -d
-# откат на конкретную сборку
+
+# roll back to a known image
 TODOOSHKA_TAG=sha-1a2b3c4 docker compose pull
 TODOOSHKA_TAG=sha-1a2b3c4 docker compose up -d
 ```
 
-Проверить, какая сборка запущена: `docker compose ps` и `docker inspect --format '{{.Config.Image}}' todooshka-app-1`.
+Check the running image with `docker compose ps` and
+`docker inspect --format '{{.Config.Image}}' todooshka-app-1`.
 
-### Бэкап и восстановление
+### Backup and restore
 
-Копия снимается через `VACUUM INTO` и проверяется `PRAGMA integrity_check`; существующий файл
-не перезаписывается. Данные лежат в томе `todooshka-data` (`/data/todooshka.db`).
+Backups use `VACUUM INTO` and verify the copy with `PRAGMA integrity_check`. An existing file
+is never overwritten. Data lives in the `todooshka-data` volume (`/data/todooshka.db`); SQLite
+WAL files are part of the same volume.
 
 ```bash
 docker compose exec app todooshka backup /data/backups/todooshka-$(date +%F-%H%M).db
 ```
 
-Восстановление — только на остановленном сервисе:
+Restore only while the application is stopped:
 
 ```bash
 docker compose stop app
 docker compose run --rm --entrypoint sh app -c 'rm -f /data/todooshka.db-wal /data/todooshka.db-shm'
 docker compose cp todooshka-2026-11-14-1200.db app:/data/todooshka.db
 docker compose start app
-docker compose exec app todooshka user list   # база читается, пользователи на месте
+docker compose exec app todooshka user list   # database opens, users are present
 ```
 
-### HTTPS и домен
+### HTTPS
 
-Caddy входит в обычный `docker compose up -d`. Ему нужны открытые снаружи порты 80 и 443 и
-DNS-запись A домена на IP VM:
+Caddy is part of the normal `docker compose up -d`. It needs ports 80 and 443 open and a DNS
+A record pointing to the VM. Set `TODOOSHKA_DOMAIN` in `.env`; Caddy handles certificate
+issuance and renewal. The application listens on `app:8080` only inside the Compose network.
 
-```bash
-# .env
-TODOOSHKA_DOMAIN=todo.example.org
-COOKIE_SECURE=true
-```
+## Security notes
 
-Caddy сам получает и продлевает сертификат, делает редирект с HTTP на HTTPS, добавляет HSTS.
-Порт приложения 8080 наружу не публикуется — только внутренняя сеть compose.
+- One account, no registration, no password reset by email.
+- Passwords are hashed with Argon2id; only a SHA-256 hash of the session token is stored.
+- The session cookie is `HttpOnly`, `SameSite=Lax`, and `Secure` under HTTPS.
+- Login attempts are rate-limited per username.
+- Attachments are served only to an authenticated session, with `Content-Disposition` and
+  `X-Content-Type-Options: nosniff`.
+- TLS is terminated by Caddy; the application port is not exposed to the internet.
 
-## Статус
+To report a vulnerability, read [SECURITY.md](SECURITY.md). Please do not open a public issue
+for an unfixed security problem.
 
-- [x] 0. Каркас
-- [x] 1. Данные и проекты (CRUD, счётчики, HTTP-API)
-- [x] 2. Задачи и порядок (move в транзакции, перенумерация)
-- [x] 3. Auth (CLI пользователей, Argon2id, cookie-сессии, лимит попыток)
-- [x] 4. Фронт: макет и проекты (вход, список, создание, архив)
-- [x] 5. Фронт: доска и DnD (перенос между колонками, диалог задачи, вкладки на телефоне)
-- [x] 6. Образ и VM (CI собирает образ, VM тянет latest/0.1.0/sha из GHCR)
-- [x] 7. Полировка (пустые состояния, хоткеи Esc/Enter, заголовки вкладок, favicon и манифест)
+## Limitations and roadmap
 
-Вторая волна:
+Todooshka deliberately stays small:
 
-- [x] 2.0 Макет добавок
-- [x] 2.1 Планирование (срок, четыре приоритета, оценка)
-- [x] 2.2 Чек-лист задачи
-- [x] 2.3 Теги, поиск и фильтры
-- [x] 2.4 Комментарии
-- [x] 2.5 Вложения
-- [x] 2.6 Деплой второй волны на VM (образ `7e0d264`, миграции 0005–0006 применены, данные на месте)
-- [x] 2.7 Домен и TLS: Caddy на 80/443, 8080 закрыт снаружи
+- one user per installation;
+- no real-time collaboration or shared workspaces;
+- no Jira/Trello/Git integrations;
+- no time tracking, recurring tasks, or reporting;
+- no mobile apps.
+
+Possible future work: more locales, import/export, and better keyboard navigation are reasonable
+next steps.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Run the checks above before opening a pull request.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+---
+
+Русская версия: [README.ru.md](README.ru.md).
