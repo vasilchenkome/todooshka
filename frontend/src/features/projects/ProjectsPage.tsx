@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,15 @@ export default function ProjectsPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!creating) return;
+    if (window.matchMedia("(pointer: fine)").matches) {
+      inputRef.current?.focus();
+    }
+  }, [creating]);
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
 
@@ -25,6 +34,7 @@ export default function ProjectsPage() {
     onSuccess: () => {
       setNewName("");
       setCreating(false);
+      triggerRef.current?.focus();
       void queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
@@ -44,8 +54,18 @@ export default function ProjectsPage() {
   }
 
   function startCreating() {
+    if (creating) {
+      inputRef.current?.focus();
+      return;
+    }
     createProject.reset();
     setCreating(true);
+  }
+
+  function closeCreate() {
+    setCreating(false);
+    setNewName("");
+    triggerRef.current?.focus();
   }
 
   return (
@@ -54,10 +74,74 @@ export default function ProjectsPage() {
 
       <main className="flex-1 px-5 py-8 md:px-12 md:py-12">
         <div className="w-full max-w-[1180px]">
-          <h1 className="font-display text-[32px] font-semibold tracking-[-0.02em]">{t("projects.title")}</h1>
+          <div className="relative flex w-max max-w-full items-center pr-12">
+            <h1 className="min-w-0 truncate font-display text-[32px] font-semibold tracking-[-0.02em]">
+              {t("projects.title")}
+            </h1>
+            <button
+              ref={triggerRef}
+              type="button"
+              aria-label={t("projects.newAria")}
+              aria-expanded={creating}
+              aria-controls="create-project"
+              onClick={startCreating}
+              className="group absolute top-1/2 right-0 grid h-11 w-11 -translate-y-1/2 place-items-center"
+            >
+              <span
+                aria-hidden="true"
+                className={`grid h-[30px] w-[30px] place-items-center border font-display text-[20px] font-semibold leading-none transition-colors ${
+                  creating
+                    ? "border-signal bg-sheet text-signal"
+                    : "border-rule text-ink group-hover:border-signal group-hover:bg-sheet group-hover:text-signal"
+                }`}
+              >
+                +
+              </span>
+            </button>
+          </div>
           <p className="mt-1.5 mb-7 text-[13px] text-steel">
             {t("projects.summary", { active: active.length, archived: archived.length })}
           </p>
+
+          {creating && (
+            <form
+              id="create-project"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const name = newName.trim();
+                if (name) createProject.mutate(name);
+              }}
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-4"
+            >
+              <input
+                ref={inputRef}
+                value={newName}
+                aria-label={t("projects.nameAria")}
+                placeholder={t("projects.namePlaceholder")}
+                onChange={(event) => setNewName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    closeCreate();
+                  }
+                }}
+                className="w-full max-w-[420px] border-b border-rule bg-transparent py-2 text-[15px] outline-none transition-colors focus:border-signal"
+              />
+              <button
+                type="submit"
+                disabled={!newName.trim() || createProject.isPending}
+                className="text-[13px] text-ink transition-colors hover:text-signal disabled:text-steel"
+              >
+                {t("projects.create")}
+              </button>
+              <button
+                type="button"
+                onClick={closeCreate}
+                className="text-[13px] text-steel hover:text-ink"
+              >
+                {t("common.cancel")}
+              </button>
+            </form>
+          )}
 
           {mutationError && (
             <p role="alert" className="mb-5 border-l-2 border-signal pl-3 text-[13px]">
@@ -102,67 +186,11 @@ export default function ProjectsPage() {
             </ul>
           )}
 
-          {!projects.isPending && !projects.isError && active.length === 0 && (
+          {!projects.isPending && !projects.isError && active.length === 0 && !creating && (
             <div className="border-t border-rule py-10 text-[14px] text-steel">
               {t("projects.empty")}
             </div>
           )}
-
-          <div className="mt-5">
-            {creating ? (
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const name = newName.trim();
-                  if (name) createProject.mutate(name);
-                }}
-                className="flex flex-wrap items-center gap-x-4 gap-y-2"
-              >
-                <input
-                  autoFocus
-                  value={newName}
-                  aria-label={t("projects.nameAria")}
-                  placeholder={t("projects.namePlaceholder")}
-                  onChange={(event) => setNewName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      setCreating(false);
-                      setNewName("");
-                    }
-                  }}
-                  className="w-full max-w-[420px] border-b border-rule bg-transparent py-2 text-[15px] outline-none transition-colors focus:border-signal"
-                />
-                <button
-                  type="submit"
-                  disabled={!newName.trim() || createProject.isPending}
-                  className="text-[13px] text-ink transition-colors hover:text-signal disabled:text-steel"
-                >
-                  {t("projects.create")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCreating(false);
-                    setNewName("");
-                  }}
-                  className="text-[13px] text-steel hover:text-ink"
-                >
-                  {t("common.cancel")}
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                onClick={startCreating}
-                className="flex items-center gap-2 text-[14px] text-steel transition-colors hover:text-signal"
-              >
-                <span aria-hidden="true" className="font-display text-[20px] leading-none text-ink">
-                  +
-                </span>
-                {t("projects.new")}
-              </button>
-            )}
-          </div>
 
           {archived.length > 0 && (
             <div className="mt-8">
