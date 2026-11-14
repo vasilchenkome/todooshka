@@ -5,7 +5,7 @@ focused and discuss larger features before writing a lot of code.
 
 ## Development setup
 
-Requirements: Rust 1.88+, Node.js 22+, npm.
+Requirements: Rust 1.99+, Node.js 22+, npm.
 
 ```bash
 # backend

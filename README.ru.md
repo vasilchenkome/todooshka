@@ -39,7 +39,7 @@ Todooshka — маленькая быстрая доска для одного �
 
 | Слой | Выбор |
 |---|---|
-| Бэкенд | Rust 1.88+, axum, tokio, SQLite через sqlx |
+| Бэкенд | Rust 1.99+, axum, tokio, SQLite через sqlx |
 | Фронтенд | React 19, TypeScript, Vite, Tailwind CSS 4 |
 | Состояние и формы | TanStack Query, zod |
 | Drag and drop | dnd-kit |
@@ -69,7 +69,7 @@ Todooshka — маленькая быстрая доска для одного �
 
 ## Быстрый старт
 
-Нужны Rust 1.88+, Node.js 22+ и npm.
+Нужны Rust 1.99+, Node.js 22+ и npm.
 
 ```bash
 # 1. Создать единственного пользователя (та же база SQLite)

@@ -40,7 +40,7 @@ It is intentionally **not**:
 
 | Layer | Choice |
 |---|---|
-| Backend | Rust 1.88+, axum, tokio, SQLite via sqlx |
+| Backend | Rust 1.99+, axum, tokio, SQLite via sqlx |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4 |
 | State and forms | TanStack Query, zod |
 | Drag and drop | dnd-kit |
@@ -70,7 +70,7 @@ The boundary rule is checked in CI and locally:
 
 ## Quick start
 
-Requirements: Rust 1.88 or newer, Node.js 22 or newer, npm.
+Requirements: Rust 1.99 or newer, Node.js 22 or newer, npm.
 
 ```bash
 # 1. Create the only user (runs against the same SQLite file)
