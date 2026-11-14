@@ -48,7 +48,7 @@ npm run dev
 |---|---|---|
 | `BIND_ADDR` | `127.0.0.1:8080` | адрес сервера; в контейнере `0.0.0.0:8080` |
 | `DATABASE_URL` | `sqlite://todooshka.db` | файл базы; схема обязательна (`sqlite://`), иначе старт падает |
-| `COOKIE_SECURE` | `false` | `true` — когда приложение за HTTPS: cookie получает флаг `Secure` |
+| `COOKIE_SECURE` | `false` | `true` — когда приложение за HTTPS: cookie получает флаг `Secure` (в compose по умолчанию `true`) |
 | `RUST_LOG` | `info` | уровень логов |
 | `LOG_FORMAT` | `text` | `json` — структурированные логи для контейнера |
 
@@ -100,9 +100,10 @@ docker compose ps            # app должен стать healthy
 docker compose exec app todooshka user add -u kirill
 ```
 
-Сервис слушает `http://<ip-vm>:8080`; порт и тег образа задаются в `.env` рядом с compose:
-`TODOOSHKA_PORT` (по умолчанию 8080), `TODOOSHKA_TAG` (по умолчанию `latest`), `COOKIE_SECURE`.
-Приложение в контейнере пишет JSON-логи (`LOG_FORMAT=json`):
+Сервис доступен только через Caddy на `https://<домен>`; порт приложения 8080 не публикуется
+наружу, Caddy ходит к нему по внутренней сети Docker. В `.env` рядом с compose задаются
+`TODOOSHKA_DOMAIN` (обязательно), `TODOOSHKA_TAG` (по умолчанию `latest`) и `COOKIE_SECURE`
+(по умолчанию `true`). Приложение пишет JSON-логи (`LOG_FORMAT=json`):
 
 ```bash
 docker compose logs -f app
@@ -146,15 +147,19 @@ docker compose start app
 docker compose exec app todooshka user list   # база читается, пользователи на месте
 ```
 
-### HTTPS (профиль tls, по умолчанию выключен)
+### HTTPS и домен
 
-В `docker-compose.yml` есть профиль `tls` с Caddy. Включается, когда есть DNS-имя:
+Caddy входит в обычный `docker compose up -d`. Ему нужны открытые снаружи порты 80 и 443 и
+DNS-запись A домена на IP VM:
 
 ```bash
-TODOOSHKA_DOMAIN=todo.example.org COOKIE_SECURE=true docker compose --profile tls up -d
+# .env
+TODOOSHKA_DOMAIN=todo.example.org
+COOKIE_SECURE=true
 ```
 
-Caddy получает сертификат сам, приложение остаётся на внутреннем порту 8080.
+Caddy сам получает и продлевает сертификат, делает редирект с HTTP на HTTPS, добавляет HSTS.
+Порт приложения 8080 наружу не публикуется — только внутренняя сеть compose.
 
 ## Статус
 
@@ -176,3 +181,4 @@ Caddy получает сертификат сам, приложение ост�
 - [x] 2.4 Комментарии
 - [x] 2.5 Вложения
 - [x] 2.6 Деплой второй волны на VM (образ `7e0d264`, миграции 0005–0006 применены, данные на месте)
+- [x] 2.7 Домен и TLS: Caddy на 80/443, 8080 закрыт снаружи
