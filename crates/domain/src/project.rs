@@ -21,6 +21,12 @@ impl ProjectId {
     }
 }
 
+impl std::fmt::Display for ProjectId {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "{}", self.0)
+    }
+}
+
 /// Имя проекта уже обрезано по краям и проверено; пустым его сделать нельзя.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProjectName(String);

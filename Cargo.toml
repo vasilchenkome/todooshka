@@ -23,6 +23,7 @@ todooshka-sqlite = { path = "crates/sqlite" }
 todooshka-http = { path = "crates/http" }
 
 # Внешние зависимости: версии фиксируются Cargo.lock.
+async-trait = "0.1"
 axum = "0.8"
 serde = { version = "1", features = ["derive"] }
 sqlx = { version = "0.8", default-features = false, features = [

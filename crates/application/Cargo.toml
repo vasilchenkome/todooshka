@@ -7,4 +7,9 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+async-trait.workspace = true
+thiserror.workspace = true
 todooshka-domain.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
