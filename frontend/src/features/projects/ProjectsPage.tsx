@@ -72,12 +72,21 @@ export default function ProjectsPage() {
     <div className="flex min-h-full flex-col">
       <AppBar
         right={
-          <Link
-            to="/today"
-            className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
-          >
-            {t("nav.today")}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/today"
+              className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+            >
+              {t("nav.today")}
+            </Link>
+            <a
+              href="/api/export"
+              download
+              className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+            >
+              {t("projects.export")}
+            </a>
+          </div>
         }
       />
 

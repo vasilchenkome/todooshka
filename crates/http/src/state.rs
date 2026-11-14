@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use todooshka_app::{
-    AgendaService, AttachmentService, AuthService, CommentService, ProjectService, SubtaskService,
-    TagService, TaskService,
+    AgendaService, AttachmentService, AuthService, CommentService, ExportService, ProjectService,
+    SubtaskService, TagService, TaskService,
 };
 
 use crate::auth::LoginLimiter;
@@ -20,6 +20,7 @@ pub struct AppState {
     pub projects: Arc<ProjectService>,
     pub tasks: Arc<TaskService>,
     pub agenda: Arc<AgendaService>,
+    pub export: Arc<ExportService>,
     pub subtasks: Arc<SubtaskService>,
     pub tags: Arc<TagService>,
     pub comments: Arc<CommentService>,

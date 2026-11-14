@@ -8,6 +8,7 @@ mod attachments;
 mod auth;
 mod comments;
 mod error;
+mod export;
 mod ports;
 mod projects;
 mod subtasks;
@@ -22,10 +23,14 @@ pub use auth::{
 };
 pub use comments::CommentService;
 pub use error::{ApplicationError, RepositoryError};
+pub use export::{
+    ExportAttachment, ExportComment, ExportData, ExportProject, ExportService, ExportSnapshot,
+    ExportSubtask, ExportTag, ExportTask,
+};
 pub use ports::{
-    AgendaReader, AttachmentStore, Clock, CommentStore, PasswordHasher, ProjectRepository,
-    ProjectTaskCount, SessionStore, SessionTokens, StoredSession, SubtaskStore, TagStore,
-    TaskStore, TaskTransaction, UserStore,
+    AgendaReader, AttachmentStore, Clock, CommentStore, ExportReader, PasswordHasher,
+    ProjectRepository, ProjectTaskCount, SessionStore, SessionTokens, StoredSession, SubtaskStore,
+    TagStore, TaskStore, TaskTransaction, UserStore,
 };
 pub use projects::{CreateProject, ProjectService, UpdateProject};
 pub use subtasks::SubtaskService;

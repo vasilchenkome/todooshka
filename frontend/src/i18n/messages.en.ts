@@ -41,6 +41,7 @@ export const en = {
   "today.empty": "nothing for today or this week",
   "today.toProjects": "to projects",
 
+  "projects.export": "export",
   "projects.title": "Projects",
   "projects.summary": "Active: {active} · archived: {archived}. Counts are tasks per column.",
   "projects.loading": "loading projects…",

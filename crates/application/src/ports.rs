@@ -7,6 +7,7 @@ use todooshka_domain::{
 
 use crate::agenda::AgendaEntry;
 use crate::error::RepositoryError;
+use crate::export::ExportData;
 
 /// Project storage in the language of the domain.
 ///
@@ -31,6 +32,12 @@ pub trait AgendaReader: Send + Sync {
         &self,
         through: &DueDate,
     ) -> Result<Vec<AgendaEntry>, RepositoryError>;
+}
+
+/// Full plain snapshot needed by the export; no auth tables are visible here.
+#[async_trait]
+pub trait ExportReader: Send + Sync {
+    async fn read(&self) -> Result<ExportData, RepositoryError>;
 }
 
 /// Time source: use cases never call the system clock, so tests stay deterministic.

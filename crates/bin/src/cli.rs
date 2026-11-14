@@ -12,6 +12,7 @@ Todooshka — Kanban по рабочим проектам.
   todooshka user list                     список пользователей
   todooshka healthcheck                   проверить готовность запущенного сервера
   todooshka backup <файл>                 снять копию базы и проверить её целостность
+  todooshka export <файл>                 выгрузить проекты и задачи в JSON
 
 Флаги:
   --password-stdin   читать пароль из stdin вместо скрытого ввода
@@ -35,6 +36,9 @@ pub enum Command {
     Backup {
         target: String,
     },
+    Export {
+        target: String,
+    },
     Help,
 }
 
@@ -51,6 +55,9 @@ pub enum CliError {
 
     #[error("укажите путь к файлу копии: todooshka backup <файл>")]
     MissingBackupPath,
+
+    #[error("укажите путь к JSON-файлу: todooshka export <файл>")]
+    MissingExportPath,
 }
 
 /// Parses the arguments without the program name. `--help` and `help` print usage.
@@ -67,7 +74,11 @@ pub fn parse(args: impl IntoIterator<Item = OsString>) -> Result<Command, CliErr
         [command, target] if command == "backup" => Ok(Command::Backup {
             target: target.clone(),
         }),
+        [command, target] if command == "export" => Ok(Command::Export {
+            target: target.clone(),
+        }),
         [command] if command == "backup" => Err(CliError::MissingBackupPath),
+        [command] if command == "export" => Err(CliError::MissingExportPath),
         [command] if command == "-h" || command == "--help" || command == "help" => {
             Ok(Command::Help)
         }
@@ -166,6 +177,20 @@ mod tests {
         assert_eq!(
             parse_args(&["user", "list"]).expect("команда"),
             Command::UserList
+        );
+    }
+
+    #[test]
+    fn export_with_a_target_is_recognized() {
+        assert_eq!(
+            parse_args(&["export", "todooshka.json"]).expect("команда"),
+            Command::Export {
+                target: "todooshka.json".to_owned()
+            }
+        );
+        assert_eq!(
+            parse_args(&["export"]).expect_err("нужен файл"),
+            CliError::MissingExportPath
         );
     }
 

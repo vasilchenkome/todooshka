@@ -39,6 +39,7 @@ export const ru = {
   "today.empty": "на сегодня и неделю пусто",
   "today.toProjects": "к проектам",
 
+  "projects.export": "экспорт",
   "projects.title": "Проекты",
   "projects.summary": "Активных: {active} · в архиве: {archived}. Цифры — задачи по колонкам.",
   "projects.loading": "загружаю проекты…",
