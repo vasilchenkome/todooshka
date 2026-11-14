@@ -1,40 +1,31 @@
-import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-type HealthState = "loading" | "ok" | "unreachable";
+import LoginPage from "./features/auth/LoginPage";
+import { RequireAuth } from "./features/auth/RequireAuth";
+import BoardPage from "./features/board/BoardPage";
+import ProjectsPage from "./features/projects/ProjectsPage";
 
-/**
- * Заглушка этапа 0: проверяет, что Vite-прокси и health-эндпоинт связаны.
- * Экраны и дизайн появятся на этапе 4.
- */
 export default function App() {
-  const [health, setHealth] = useState<HealthState>("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function probe() {
-      try {
-        const response = await fetch("/api/health");
-        if (!cancelled) {
-          setHealth(response.ok ? "ok" : "unreachable");
-        }
-      } catch {
-        if (!cancelled) {
-          setHealth("unreachable");
-        }
-      }
-    }
-
-    void probe();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
-    <main>
-      <h1>Todooshka</h1>
-      <p>бэкенд: {health === "loading" ? "проверяю…" : health === "ok" ? "ok" : "недоступен"}</p>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/"
+        element={
+          <RequireAuth>
+            <ProjectsPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
+        element={
+          <RequireAuth>
+            <BoardPage />
+          </RequireAuth>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
