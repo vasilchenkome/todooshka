@@ -12,6 +12,7 @@ fi
 awk -v version="$version" '
   $0 ~ "^## \\[" version "\\]" { found = 1; print; next }
   found && /^## \[/ { exit }
+  found && /^\[[^]]+\]:/ { exit }
   found { print }
 ' CHANGELOG.md
 
