@@ -176,7 +176,8 @@ git push origin v0.2.0
 The deploy job uses a separate `deploy` SSH user with a forced command, takes a database
 backup before updating, waits for the container health check, checks HTTPS, and rolls back to
 the previous tag on failure. `latest` is not used in production; `TODOOSHKA_TAG` in the VM
-`.env` is pinned to the deployed version.
+`.env` is pinned to the deployed version. A successful deploy also publishes a GitHub Release
+from the matching section of `CHANGELOG.md`.
 
 ### Manual update and rollback
 
@@ -248,6 +249,10 @@ next steps.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Run the checks above before opening a pull request.
+
+## Changelog
+
+Release notes and notable changes are documented in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
