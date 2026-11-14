@@ -1,0 +1,17 @@
+# Черновик этапа 0. Боевой compose (healthcheck, Caddy-профиль, volume, лимиты) — этап 6.
+services:
+  app:
+    build: .
+    image: todooshka:0.1.0
+    restart: unless-stopped
+    environment:
+      BIND_ADDR: 0.0.0.0:8080
+      DATABASE_URL: sqlite:///data/todooshka.db
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    volumes:
+      - todooshka-data:/data
+
+volumes:
+  todooshka-data:

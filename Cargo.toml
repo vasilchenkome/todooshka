@@ -1,0 +1,31 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/domain",
+    "crates/application",
+    "crates/sqlite",
+    "crates/http",
+    "crates/bin",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+authors = ["ad77r <kirill@vasilchenko.me>"]
+
+[workspace.dependencies]
+# Внутренние крейты: зависимости направлены только внутрь.
+todooshka-domain = { path = "crates/domain" }
+todooshka-app = { path = "crates/application" }
+todooshka-sqlite = { path = "crates/sqlite" }
+todooshka-http = { path = "crates/http" }
+
+# Внешние зависимости: версии фиксируются Cargo.lock.
+axum = "0.8"
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
