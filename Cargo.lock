@@ -1844,7 +1844,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "todooshka"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1852,7 +1852,7 @@ dependencies = [
  "hex",
  "rand_core",
  "rpassword",
- "sha2 0.10.9",
+ "sha2 0.11.1",
  "sqlx",
  "thiserror",
  "todooshka-app",
@@ -1866,7 +1866,7 @@ dependencies = [
 
 [[package]]
 name = "todooshka-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "thiserror",
@@ -1876,14 +1876,14 @@ dependencies = [
 
 [[package]]
 name = "todooshka-domain"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "todooshka-http"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -1903,7 +1903,7 @@ dependencies = [
 
 [[package]]
 name = "todooshka-sqlite"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "sqlx",
@@ -1970,14 +1970,15 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.11"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
+checksum = "08a05a66a4fdd61cbbe0a1d755ffe0ca6aba159dd4820936a0ff8a8278245b9c"
 dependencies = [
  "bitflags",
  "bytes",
  "http",
  "http-body",
+ "percent-encoding",
  "pin-project-lite",
  "tokio",
  "tower-layer",
