@@ -1601,6 +1601,9 @@ dependencies = [
 [[package]]
 name = "todooshka-domain"
 version = "0.1.0"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "todooshka-http"
