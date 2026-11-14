@@ -7,6 +7,9 @@ pub const DEFAULT_BIND_ADDR: &str = "127.0.0.1:8080";
 /// Файл базы в рабочей директории; в контейнере — `sqlite:///data/todooshka.db`.
 pub const DEFAULT_DATABASE_URL: &str = "sqlite://todooshka.db";
 
+/// Ставится в `true`, когда приложение за HTTPS: тогда cookie помечается `Secure`.
+pub const COOKIE_SECURE_ENV: &str = "COOKIE_SECURE";
+
 #[derive(Debug, thiserror::Error)]
 pub enum StartupError {
     #[error("BIND_ADDR={value:?} не является адресом вида 127.0.0.1:8080: {source}")]
@@ -31,4 +34,16 @@ pub fn bind_addr() -> Result<SocketAddr, StartupError> {
 /// Адрес базы: разбирается и проверяется при подключении, до старта сервера.
 pub fn database_url() -> String {
     env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_owned())
+}
+
+/// Нужен ли флаг `Secure` у cookie сессии. По умолчанию — нет: LAN по HTTP.
+pub fn cookie_secure() -> bool {
+    matches!(
+        env::var(COOKIE_SECURE_ENV)
+            .unwrap_or_default()
+            .trim()
+            .to_ascii_lowercase()
+            .as_str(),
+        "1" | "true" | "yes"
+    )
 }

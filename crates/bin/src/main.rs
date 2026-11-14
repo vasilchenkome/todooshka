@@ -15,7 +15,7 @@ use todooshka_app::{
     AuthService, ChangePassword, Clock, CreateUser, ProjectRepository, ProjectService, TaskService,
     TaskStore,
 };
-use todooshka_http::AppState;
+use todooshka_http::{AppState, auth::LoginLimiter};
 use todooshka_sqlite::{SqliteProjects, SqliteSessions, SqliteTasks, SqliteUsers};
 
 use crate::clock::SystemClock;
@@ -78,10 +78,23 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
     let tasks = Arc::new(TaskService::new(
         tasks_repository,
         projects_repository,
+        Arc::clone(&clock),
+    ));
+    let auth = Arc::new(AuthService::new(
+        Arc::new(SqliteUsers::new(pool.clone())),
+        Arc::new(SqliteSessions::new(pool.clone())),
+        Arc::new(Argon2PasswordHasher),
+        Arc::new(RandomSessionTokens),
         clock,
     ));
 
-    let state = AppState { projects, tasks };
+    let state = AppState {
+        projects,
+        tasks,
+        auth,
+        login_limiter: LoginLimiter::default(),
+        cookie_secure: config::cookie_secure(),
+    };
 
     let addr = config::bind_addr()?;
     let listener = tokio::net::TcpListener::bind(addr).await?;

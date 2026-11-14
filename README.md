@@ -35,7 +35,21 @@ npm run dev
 |---|---|---|
 | `BIND_ADDR` | `127.0.0.1:8080` | адрес сервера; в контейнере `0.0.0.0:8080` |
 | `DATABASE_URL` | `sqlite://todooshka.db` | файл базы; схема обязательна (`sqlite://`), иначе старт падает |
+| `COOKIE_SECURE` | `false` | `true` — когда приложение за HTTPS: cookie получает флаг `Secure` |
 | `RUST_LOG` | `info` | уровень логов |
+
+## Пользователи
+
+Учётная запись создаётся только из CLI, до или во время работы сервера на той же базе:
+
+```bash
+todooshka user add -u kirill      # пароль вводится скрыто и дважды
+todooshka user passwd -u kirill   # смена пароля отзывает все сессии
+todooshka user list
+```
+
+Для скриптов и контейнера пароль передаётся одной строкой: `todooshka user add -u kirill --password-stdin`.
+Всё, кроме `/api/health` и `/api/auth/login`, требует cookie сессии (`HttpOnly`, `SameSite=Lax`, 30 дней).
 
 ## Проверки
 

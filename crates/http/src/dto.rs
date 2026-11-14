@@ -109,3 +109,30 @@ pub struct MoveTaskRequest {
     pub status: String,
     pub target_index: usize,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserDto {
+    pub id: i64,
+    pub username: String,
+}
+
+impl UserDto {
+    pub fn from_user(user: &todooshka_domain::User) -> Self {
+        Self {
+            id: user.id().as_raw(),
+            username: user.username().as_str().to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct LoginResponse {
+    pub user: UserDto,
+    pub expires_at: i64,
+}

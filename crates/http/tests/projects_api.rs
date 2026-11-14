@@ -1,96 +1,9 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicI64, Ordering};
+mod support;
 
-use axum::Router;
-use axum::body::Body;
-use axum::http::{Method, Request, StatusCode, header};
-use http_body_util::BodyExt;
-use serde_json::{Value, json};
-use tempfile::TempDir;
-use todooshka_app::{Clock, ProjectRepository, ProjectService, TaskService, TaskStore};
-use todooshka_domain::Timestamp;
-use todooshka_http::{AppState, router};
-use todooshka_sqlite::{SqliteProjects, SqliteTasks, connect, migrate};
-use tower::ServiceExt;
+use axum::http::{Method, StatusCode};
+use serde_json::json;
 
-struct FixedClock(AtomicI64);
-
-impl Clock for FixedClock {
-    fn now(&self) -> Timestamp {
-        Timestamp::from_unix_seconds(self.0.load(Ordering::SeqCst))
-    }
-}
-
-struct TestApp {
-    router: Router,
-    _dir: TempDir,
-}
-
-async fn app() -> TestApp {
-    let dir = tempfile::tempdir().expect("временная папка");
-    let path = dir.path().join("todooshka.db");
-    let url = format!("sqlite://{}", path.to_string_lossy().replace('\\', "/"));
-    let pool = connect(&url).await.expect("база открывается");
-    migrate(&pool).await.expect("миграции применяются");
-
-    let projects_repository: Arc<dyn ProjectRepository> =
-        Arc::new(SqliteProjects::new(pool.clone()));
-    let tasks_repository: Arc<dyn TaskStore> = Arc::new(SqliteTasks::new(pool));
-    let clock: Arc<dyn Clock> = Arc::new(FixedClock(AtomicI64::new(1_000)));
-
-    let projects = Arc::new(ProjectService::new(
-        Arc::clone(&projects_repository),
-        Arc::clone(&clock),
-    ));
-    let tasks = Arc::new(TaskService::new(
-        tasks_repository,
-        projects_repository,
-        clock,
-    ));
-
-    TestApp {
-        router: router(AppState { projects, tasks }),
-        _dir: dir,
-    }
-}
-
-async fn request(
-    app: &TestApp,
-    method: Method,
-    uri: &str,
-    payload: Option<Value>,
-) -> (StatusCode, Value) {
-    let mut builder = Request::builder().method(method).uri(uri);
-    let body = match payload {
-        Some(value) => {
-            builder = builder.header(header::CONTENT_TYPE, "application/json");
-            Body::from(value.to_string())
-        }
-        None => Body::empty(),
-    };
-
-    let response = app
-        .router
-        .clone()
-        .oneshot(builder.body(body).expect("запрос собирается"))
-        .await
-        .expect("роутер отвечает");
-
-    let status = response.status();
-    let bytes = response
-        .into_body()
-        .collect()
-        .await
-        .expect("тело читается")
-        .to_bytes();
-    let json = if bytes.is_empty() {
-        Value::Null
-    } else {
-        serde_json::from_slice(&bytes).expect("ответ — JSON")
-    };
-
-    (status, json)
-}
+use support::{TestApp, app, request};
 
 async fn create_project(app: &TestApp, name: &str) -> i64 {
     let (status, body) = request(
@@ -109,7 +22,7 @@ async fn create_project(app: &TestApp, name: &str) -> i64 {
 async fn health_stays_liveness_only() {
     let app = app().await;
 
-    let (status, body) = request(&app, Method::GET, "/api/health", None).await;
+    let (status, body) = support::request_anon(&app, Method::GET, "/api/health", None).await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["status"], "ok");
@@ -290,4 +203,14 @@ async fn delete_archives_instead_of_removing() {
     .await;
     assert_eq!(all[0]["id"], id);
     assert_eq!(all[0]["archived"], true);
+}
+
+#[tokio::test]
+async fn project_list_requires_session() {
+    let app = app().await;
+
+    let (status, body) = support::request_anon(&app, Method::GET, "/api/projects", None).await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body["error"]["code"], "unauthorized");
 }

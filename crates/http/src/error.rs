@@ -29,6 +29,18 @@ impl ApiError {
             message,
         )
     }
+
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self::new(StatusCode::UNAUTHORIZED, "unauthorized", message)
+    }
+
+    pub fn too_many_attempts() -> Self {
+        Self::new(
+            StatusCode::TOO_MANY_REQUESTS,
+            "too_many_attempts",
+            "слишком много попыток входа, попробуйте через минуту",
+        )
+    }
 }
 
 #[derive(Serialize)]
