@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use todooshka_app::{
-    AddTask, ApplicationError, Clock, EditTask, MoveTask, ProjectRepository, RepositoryError,
-    TaskService, TaskStore, TaskTransaction,
+    AddTask, ApplicationError, Clock, EditTask, MoveTask, ProjectRepository, ProjectTaskCount,
+    RepositoryError, TaskService, TaskStore, TaskTransaction,
 };
 use todooshka_domain::{
     DomainError, Project, ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp,
@@ -124,6 +124,10 @@ impl TaskStore for FakeTasks {
         let before = items.len();
         items.retain(|task| task.id() != id);
         Ok(items.len() != before)
+    }
+
+    async fn counts_by_project(&self) -> Result<Vec<ProjectTaskCount>, RepositoryError> {
+        Ok(Vec::new())
     }
 
     async fn transaction(&self) -> Result<Box<dyn TaskTransaction>, RepositoryError> {

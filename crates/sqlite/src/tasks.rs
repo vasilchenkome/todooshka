@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use sqlx::{Sqlite, SqlitePool, Transaction};
-use todooshka_app::{RepositoryError, TaskStore, TaskTransaction};
+use todooshka_app::{ProjectTaskCount, RepositoryError, TaskStore, TaskTransaction};
 use todooshka_domain::{
     ProjectId, Task, TaskDraft, TaskId, TaskSnapshot, TaskStatus, TaskTitle, Timestamp,
 };
@@ -80,6 +80,40 @@ impl TaskStore for SqliteTasks {
             .map_err(unavailable)?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    async fn counts_by_project(&self) -> Result<Vec<ProjectTaskCount>, RepositoryError> {
+        #[derive(sqlx::FromRow)]
+        struct CountRow {
+            project_id: i64,
+            status: String,
+            tasks: i64,
+        }
+
+        let rows: Vec<CountRow> = sqlx::query_as(
+            "SELECT project_id, status, COUNT(*) AS tasks
+             FROM tasks
+             GROUP BY project_id, status",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(unavailable)?;
+
+        rows.into_iter()
+            .map(|row| {
+                let status = TaskStatus::from_code(&row.status).ok_or_else(|| {
+                    RepositoryError::Corrupted(format!(
+                        "неизвестный статус задачи {:?}",
+                        row.status
+                    ))
+                })?;
+                Ok(ProjectTaskCount {
+                    project_id: ProjectId::from_raw(row.project_id),
+                    status,
+                    tasks: row.tasks,
+                })
+            })
+            .collect()
     }
 
     async fn transaction(&self) -> Result<Box<dyn TaskTransaction>, RepositoryError> {

@@ -5,7 +5,7 @@ use todooshka_domain::{
 };
 
 use crate::error::ApplicationError;
-use crate::ports::{Clock, ProjectRepository, TaskStore, TaskTransaction};
+use crate::ports::{Clock, ProjectRepository, ProjectTaskCount, TaskStore, TaskTransaction};
 
 /// Добавить задачу в конец выбранной колонки.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -79,6 +79,11 @@ impl TaskService {
         });
 
         Ok(tasks)
+    }
+
+    /// Счётчики задач по всем проектам: список проектов показывает их вместо N+1 запросов.
+    pub async fn counts_by_project(&self) -> Result<Vec<ProjectTaskCount>, ApplicationError> {
+        Ok(self.tasks.counts_by_project().await?)
     }
 
     pub async fn edit(&self, command: EditTask) -> Result<Task, ApplicationError> {

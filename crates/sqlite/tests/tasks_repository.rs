@@ -228,6 +228,43 @@ async fn inconsistent_completion_is_reported_as_corruption() {
 }
 
 #[tokio::test]
+async fn counts_by_project_groups_tasks_by_status() {
+    let db = db().await;
+    let project_id = project(&db, "Проект").await;
+    let other = project(&db, "Другой").await;
+    add(&db, project_id, "Бэклог", TaskStatus::Backlog).await;
+    add(&db, project_id, "В работе", TaskStatus::InProgress).await;
+    add(&db, project_id, "Готово", TaskStatus::Done).await;
+    add(&db, other, "Чужой бэклог", TaskStatus::Backlog).await;
+
+    let mut counts = db.tasks.counts_by_project().await.expect("счётчики");
+
+    counts.sort_by_key(|count| (count.project_id.as_raw(), count.status.order()));
+    let mine: Vec<(TaskStatus, i64)> = counts
+        .iter()
+        .filter(|count| count.project_id == project_id)
+        .map(|count| (count.status, count.tasks))
+        .collect();
+
+    assert_eq!(
+        mine,
+        vec![
+            (TaskStatus::Backlog, 1),
+            (TaskStatus::InProgress, 1),
+            (TaskStatus::Done, 1)
+        ]
+    );
+    assert_eq!(
+        counts
+            .iter()
+            .filter(|count| count.project_id == other)
+            .map(|count| count.tasks)
+            .sum::<i64>(),
+        1
+    );
+}
+
+#[tokio::test]
 async fn list_column_isolates_project_and_status() {
     let db = db().await;
     let first = project(&db, "Первый").await;

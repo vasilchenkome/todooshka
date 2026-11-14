@@ -29,6 +29,21 @@ impl From<&Project> for ProjectDto {
     }
 }
 
+#[derive(Debug, Default, Serialize)]
+pub struct StatusCounts {
+    pub backlog: i64,
+    pub in_progress: i64,
+    pub done: i64,
+}
+
+/// Строка списка проектов: поля проекта и счётчики задач по колонкам.
+#[derive(Debug, Serialize)]
+pub struct ProjectListEntryDto {
+    #[serde(flatten)]
+    pub project: ProjectDto,
+    pub counts: StatusCounts,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateProjectRequest {
     pub name: String,

@@ -253,6 +253,22 @@ async fn delete_task_then_reports_not_found() {
 }
 
 #[tokio::test]
+async fn project_list_includes_task_counts() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    create_task(&app, project_id, "В бэклоге", None).await;
+    create_task(&app, project_id, "Готово", Some("done")).await;
+
+    let (status, body) = request(&app, Method::GET, "/api/projects", None).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body[0]["id"], project_id);
+    assert_eq!(body[0]["counts"]["backlog"], 1);
+    assert_eq!(body[0]["counts"]["in_progress"], 0);
+    assert_eq!(body[0]["counts"]["done"], 1);
+}
+
+#[tokio::test]
 async fn tasks_require_session() {
     let app = app().await;
 

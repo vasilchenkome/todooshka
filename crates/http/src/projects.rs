@@ -1,20 +1,46 @@
+use std::collections::HashMap;
+
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use todooshka_app::{CreateProject, UpdateProject};
-use todooshka_domain::ProjectId;
+use todooshka_domain::{ProjectId, TaskStatus};
 
-use crate::dto::{CreateProjectRequest, ListQuery, ProjectDto, UpdateProjectRequest};
+use crate::dto::{
+    CreateProjectRequest, ListQuery, ProjectDto, ProjectListEntryDto, StatusCounts,
+    UpdateProjectRequest,
+};
 use crate::error::ApiError;
 use crate::state::AppState;
 
 pub async fn list(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
-) -> Result<Json<Vec<ProjectDto>>, ApiError> {
+) -> Result<Json<Vec<ProjectListEntryDto>>, ApiError> {
     let projects = state.projects.list(query.include_archived).await?;
-    let projects = projects.iter().map(ProjectDto::from).collect();
-    Ok(Json(projects))
+    let counts = state.tasks.counts_by_project().await?;
+
+    let mut by_project: HashMap<i64, StatusCounts> = HashMap::new();
+    for count in counts {
+        let entry = by_project.entry(count.project_id.as_raw()).or_default();
+        match count.status {
+            TaskStatus::Backlog => entry.backlog = count.tasks,
+            TaskStatus::InProgress => entry.in_progress = count.tasks,
+            TaskStatus::Done => entry.done = count.tasks,
+        }
+    }
+
+    let items = projects
+        .iter()
+        .map(|project| ProjectListEntryDto {
+            project: ProjectDto::from(project),
+            counts: by_project
+                .remove(&project.id().as_raw())
+                .unwrap_or_default(),
+        })
+        .collect();
+
+    Ok(Json(items))
 }
 
 pub async fn create(

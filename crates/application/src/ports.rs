@@ -27,10 +27,20 @@ pub trait Clock: Send + Sync {
     fn now(&self) -> Timestamp;
 }
 
+/// Сколько задач проекта в каждой колонке: один запрос на все проекты доски.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ProjectTaskCount {
+    pub project_id: ProjectId,
+    pub status: TaskStatus,
+    pub tasks: i64,
+}
+
 /// Хранилище задач: чтение доски и короткие операции поверх транзакции.
 #[async_trait]
 pub trait TaskStore: Send + Sync {
     async fn list_by_project(&self, project_id: ProjectId) -> Result<Vec<Task>, RepositoryError>;
+
+    async fn counts_by_project(&self) -> Result<Vec<ProjectTaskCount>, RepositoryError>;
 
     async fn delete(&self, id: TaskId) -> Result<bool, RepositoryError>;
 
