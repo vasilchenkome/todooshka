@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 argon2.workspace = true
+async-trait.workspace = true
 axum.workspace = true
 hex.workspace = true
 rand_core.workspace = true

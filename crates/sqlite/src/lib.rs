@@ -2,6 +2,7 @@
 //!
 //! Здесь живут SQL, маппинг строк в доменные объекты и транзакции; бизнес-правил нет.
 
+mod backup;
 mod error;
 mod mapping;
 mod migrations;
@@ -11,6 +12,7 @@ mod sessions;
 mod tasks;
 mod users;
 
+pub use backup::backup_to;
 pub use error::StorageError;
 pub use migrations::{migrate, migrator};
 pub use pool::connect;

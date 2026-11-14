@@ -10,6 +10,8 @@ Todooshka — Kanban по рабочим проектам.
   todooshka user add -u <логин> [--password-stdin]     создать пользователя
   todooshka user passwd -u <логин> [--password-stdin]  сменить пароль (отзывает сессии)
   todooshka user list                     список пользователей
+  todooshka healthcheck                   проверить готовность запущенного сервера
+  todooshka backup <файл>                 снять копию базы и проверить её целостность
 
 Флаги:
   --password-stdin   читать пароль из stdin вместо скрытого ввода
@@ -29,6 +31,10 @@ pub enum Command {
         password_from_stdin: bool,
     },
     UserList,
+    Healthcheck,
+    Backup {
+        target: String,
+    },
     Help,
 }
 
@@ -42,6 +48,9 @@ pub enum CliError {
 
     #[error("у флага {0} нет значения")]
     MissingValue(&'static str),
+
+    #[error("укажите путь к файлу копии: todooshka backup <файл>")]
+    MissingBackupPath,
 }
 
 /// Разбирает аргументы без имени программы. `--help` и `help` печатают справку.
@@ -54,6 +63,11 @@ pub fn parse(args: impl IntoIterator<Item = OsString>) -> Result<Command, CliErr
     match args.as_slice() {
         [] => Ok(Command::Serve),
         [command] if command == "serve" => Ok(Command::Serve),
+        [command] if command == "healthcheck" => Ok(Command::Healthcheck),
+        [command, target] if command == "backup" => Ok(Command::Backup {
+            target: target.clone(),
+        }),
+        [command] if command == "backup" => Err(CliError::MissingBackupPath),
         [command] if command == "-h" || command == "--help" || command == "help" => {
             Ok(Command::Help)
         }
@@ -152,6 +166,28 @@ mod tests {
         assert_eq!(
             parse_args(&["user", "list"]).expect("команда"),
             Command::UserList
+        );
+    }
+
+    #[test]
+    fn healthcheck_is_recognized() {
+        assert_eq!(
+            parse_args(&["healthcheck"]).expect("команда"),
+            Command::Healthcheck
+        );
+    }
+
+    #[test]
+    fn backup_takes_a_path() {
+        assert_eq!(
+            parse_args(&["backup", "copy.db"]).expect("команда"),
+            Command::Backup {
+                target: "copy.db".to_owned()
+            }
+        );
+        assert_eq!(
+            parse_args(&["backup"]).expect_err("нужен путь"),
+            CliError::MissingBackupPath
         );
     }
 

@@ -7,15 +7,19 @@ mod logging;
 mod security;
 
 use std::error::Error;
+use std::io::{Read, Write};
+use std::net::{SocketAddr, TcpStream};
 use std::process::ExitCode;
 use std::sync::Arc;
+use std::time::Duration;
 
+use async_trait::async_trait;
 use sqlx::SqlitePool;
 use todooshka_app::{
     AuthService, ChangePassword, Clock, CreateUser, ProjectRepository, ProjectService, TaskService,
     TaskStore,
 };
-use todooshka_http::{AppState, auth::LoginLimiter};
+use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter};
 use todooshka_sqlite::{SqliteProjects, SqliteSessions, SqliteTasks, SqliteUsers};
 
 use crate::clock::SystemClock;
@@ -48,6 +52,58 @@ async fn main() -> ExitCode {
             password_from_stdin,
         } => report(change_password(&username, password_from_stdin).await),
         cli::Command::UserList => report(list_users().await),
+        cli::Command::Healthcheck => report(healthcheck()),
+        cli::Command::Backup { target } => report(backup_database(&target).await),
+    }
+}
+
+async fn backup_database(target: &str) -> Result<(), Box<dyn Error>> {
+    let pool = open_database().await?;
+    let path = std::path::Path::new(target);
+    todooshka_sqlite::backup_to(&pool, path).await?;
+    let size = std::fs::metadata(path)?.len();
+    println!("копия базы: {} ({} КБ)", path.display(), size / 1024);
+    pool.close().await;
+    Ok(())
+}
+
+/// Проверка для контейнера: читает readiness-эндпоинт по тому же адресу, что и сервер.
+fn healthcheck() -> Result<(), Box<dyn Error>> {
+    let bind = config::bind_addr()?;
+    let port = bind.port();
+    let target = SocketAddr::from(([127, 0, 0, 1], port));
+
+    let mut stream = TcpStream::connect_timeout(&target, Duration::from_secs(2))?;
+    stream.set_read_timeout(Some(Duration::from_secs(2)))?;
+    stream.set_write_timeout(Some(Duration::from_secs(2)))?;
+
+    write!(
+        stream,
+        "GET /api/health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    )?;
+
+    let mut response = String::new();
+    stream.read_to_string(&mut response)?;
+
+    if response.starts_with("HTTP/1.1 200") {
+        return Ok(());
+    }
+
+    Err(format!(
+        "healthcheck ответил: {}",
+        response.lines().next().unwrap_or("пусто")
+    )
+    .into())
+}
+
+struct DatabaseReadiness {
+    pool: SqlitePool,
+}
+
+#[async_trait]
+impl ReadinessProbe for DatabaseReadiness {
+    async fn check(&self) -> bool {
+        sqlx::query("SELECT 1").fetch_one(&self.pool).await.is_ok()
     }
 }
 
@@ -94,6 +150,7 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         auth,
         login_limiter: LoginLimiter::default(),
         cookie_secure: config::cookie_secure(),
+        readiness: Arc::new(DatabaseReadiness { pool: pool.clone() }),
     };
 
     let addr = config::bind_addr()?;

@@ -9,4 +9,7 @@ pub enum StorageError {
 
     #[error("миграции не применились: {0}")]
     Migrate(#[source] sqlx::migrate::MigrateError),
+
+    #[error("копия базы не снята: {0}")]
+    Backup(String),
 }
