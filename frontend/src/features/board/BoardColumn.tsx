@@ -72,7 +72,7 @@ export function BoardColumn({
     <section
       ref={setNodeRef}
       aria-label={title}
-      className={`${activeOnMobile ? "flex" : "hidden"} min-h-[360px] flex-col px-3 pt-6 pb-8 transition-colors md:flex md:min-h-[calc(100vh-60px)] ${
+      className={`${activeOnMobile ? "flex" : "hidden"} min-h-[360px] flex-col px-3 pt-6 pb-8 transition-colors md:flex md:min-h-[calc(100dvh-112px)] ${
         isOver ? "bg-hover" : ""
       }`}
     >
