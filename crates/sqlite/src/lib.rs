@@ -7,10 +7,14 @@ mod mapping;
 mod migrations;
 mod pool;
 mod projects;
+mod sessions;
 mod tasks;
+mod users;
 
 pub use error::StorageError;
 pub use migrations::{migrate, migrator};
 pub use pool::connect;
 pub use projects::SqliteProjects;
+pub use sessions::SqliteSessions;
 pub use tasks::SqliteTasks;
+pub use users::SqliteUsers;
