@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -121,8 +121,27 @@ export default function BoardPage() {
 
   const [dragged, setDragged] = useState<Task | null>(null);
   const [activeStatus, setActiveStatus] = useState<TaskStatus>("backlog");
+  const [mobileAddSignal, setMobileAddSignal] = useState(0);
   const [dialogTask, setDialogTask] = useState<Task | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const linkedTaskId = Number(searchParams.get("task"));
+
+  useEffect(() => {
+    if (!Number.isInteger(linkedTaskId) || linkedTaskId <= 0) return;
+    const linked = tasks.find((task) => task.id === linkedTaskId);
+    if (!linked) return;
+    setDialogTask(linked);
+    setActiveStatus(linked.status);
+  }, [linkedTaskId, tasks]);
+
+  function closeDialog() {
+    setDialogTask(null);
+    if (searchParams.has("task")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("task");
+      setSearchParams(next, { replace: true });
+    }
+  }
 
   function errorText(error: unknown, fallback = t("errors.save")): string {
     return error instanceof ApiError ? error.message : fallback;
@@ -322,7 +341,7 @@ export default function BoardPage() {
   const busy = updateTask.isPending || moveTask.isPending || deleteTask.isPending;
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden">
       <AppBar
         left={
           <>
@@ -338,34 +357,58 @@ export default function BoardPage() {
             </h1>
           </>
         }
+        right={
+          <Link
+            to="/today"
+            className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+          >
+            {t("nav.today")}
+          </Link>
+        }
       />
 
-      <main className="flex flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         {actionError && (
           <p role="alert" className="border-l-2 border-signal px-4 py-2 text-[13px] md:mx-3">
             {actionError}
           </p>
         )}
 
-        <nav className="flex gap-5 overflow-x-auto border-b border-rule px-4 md:hidden">
-          {BOARD_COLUMNS.map((status) => (
+        <div className="sticky top-[60px] z-10 shrink-0 bg-paper">
+          <div className="flex border-b border-rule md:hidden">
+            <nav className="mobile-tabs flex min-w-0 flex-1 gap-5 overflow-x-auto overflow-y-hidden px-4" aria-label={t("board.statusAria")}>
+              {BOARD_COLUMNS.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => {
+                    setActiveStatus(status);
+                    setMobileAddSignal(0);
+                  }}
+                  className={`-mb-px border-b-2 py-3 text-[13px] whitespace-nowrap transition-colors ${
+                    activeStatus === status
+                      ? "border-signal text-ink"
+                      : "border-transparent text-steel"
+                  }`}
+                >
+                  {statusLabel(status, locale)}
+                  <span className="ml-1 text-steel tabular-nums">{visibleColumns[status].length}</span>
+                </button>
+              ))}
+            </nav>
             <button
-              key={status}
               type="button"
-              onClick={() => setActiveStatus(status)}
-              className={`-mb-px border-b-2 py-3 text-[13px] whitespace-nowrap transition-colors ${
-                activeStatus === status
-                  ? "border-signal text-ink"
-                  : "border-transparent text-steel"
-              }`}
+              aria-label={t("board.addColumnAria", { column: statusLabel(activeStatus, locale) })}
+              onClick={() => setMobileAddSignal((value) => value + 1)}
+              className="grid h-11 w-11 shrink-0 place-items-center"
             >
-              {statusLabel(status, locale)}
-              <span className="ml-1 text-steel tabular-nums">{visibleColumns[status].length}</span>
+              <span aria-hidden="true" className="grid h-7 w-7 place-items-center border border-rule font-display text-[18px] font-semibold leading-none">
+                +
+              </span>
             </button>
-          ))}
-        </nav>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-b border-rule px-4 py-2.5 md:px-6">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 md:px-6">
           <input
             value={filters.query}
             onChange={(event) => setFilter("query", event.target.value)}
@@ -394,6 +437,7 @@ export default function BoardPage() {
           >
             <option value="">{t("board.dueAny")}</option>
             <option value="overdue">{t("board.dueOverdue")}</option>
+            <option value="today">{t("board.dueToday")}</option>
             <option value="week">{t("board.dueWeek")}</option>
             <option value="none">{t("board.dueNone")}</option>
           </select>
@@ -419,6 +463,7 @@ export default function BoardPage() {
               {t("board.reset")}
             </button>
           )}
+          </div>
         </div>
 
         {filterActive && visibleTasks.length === 0 && !tasksQuery.isPending && (
@@ -454,7 +499,7 @@ export default function BoardPage() {
             onDragEnd={handleDragEnd}
             onDragCancel={() => setDragged(null)}
           >
-            <div className="flex-1 md:grid md:grid-cols-3 md:divide-x md:divide-rule">
+            <div className="flex min-h-0 flex-1 overflow-hidden md:grid md:grid-cols-3 md:divide-x md:divide-rule">
               {BOARD_COLUMNS.map((status) => (
                 <BoardColumn
                   key={status}
@@ -470,6 +515,7 @@ export default function BoardPage() {
                   accent={status === "in_progress"}
                   activeOnMobile={activeStatus === status}
                   creating={createTask.isPending}
+                  addRequest={status === activeStatus ? mobileAddSignal : 0}
                   onOpenTask={setDialogTask}
                   onCreate={async (column, title) => {
                     await createTask.mutateAsync({ status: column, title });
@@ -478,7 +524,7 @@ export default function BoardPage() {
               ))}
             </div>
 
-            <DragOverlay>
+            <DragOverlay className="z-30">
               {dragged && (
                 <div className="border border-ink bg-paper px-4 py-3 text-[15px] font-medium">
                   {dragged.title}
@@ -494,7 +540,7 @@ export default function BoardPage() {
           key={dialogTask.id}
           task={dialogTask}
           busy={busy}
-          onClose={() => setDialogTask(null)}
+          onClose={closeDialog}
           onSave={async (patch) => {
             await updateTask.mutateAsync({ id: dialogTask.id, ...patch });
           }}

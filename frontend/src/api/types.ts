@@ -127,3 +127,22 @@ export type NewTask = {
   description?: string;
   status?: TaskStatus;
 };
+
+export const agendaTaskSchema = z.object({
+  project_id: z.number(),
+  project_name: z.string(),
+  task_id: z.number(),
+  title: z.string(),
+  due_on: z.string(),
+  priority: taskPrioritySchema,
+  status: taskStatusSchema,
+});
+export type AgendaTask = z.infer<typeof agendaTaskSchema>;
+
+export const agendaSchema = z.object({
+  date: z.string(),
+  overdue: z.array(agendaTaskSchema),
+  today: z.array(agendaTaskSchema),
+  week: z.array(agendaTaskSchema),
+});
+export type Agenda = z.infer<typeof agendaSchema>;

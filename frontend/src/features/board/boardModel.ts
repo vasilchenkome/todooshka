@@ -1,5 +1,6 @@
 import type { Task, TaskPriority, TaskStatus } from "../../api/types";
 import { formatShortDate } from "../../i18n/format";
+import { daysUntilDue, dueBucket, parseDateKey, todayLocalDate } from "../../shared/lib/dueCalendar";
 import type { MessageKey } from "../../i18n/messages.ru";
 import { translate } from "../../i18n/translate";
 import type { Locale } from "../../i18n/types";
@@ -112,14 +113,11 @@ export type DueLabel = {
 
 /** Due date in the local calendar; the string is treated as a calendar date without time. */
 function parseDueDate(value: string): Date | null {
-  const parts = value.split("-").map(Number);
-  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;
-  return new Date(parts[0], parts[1] - 1, parts[2]);
+  return parseDateKey(value);
 }
 
 function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return parseDateKey(todayLocalDate()) ?? new Date();
 }
 
 export function dueLabel(dueOn: string | null, locale: Locale): DueLabel {
@@ -130,7 +128,8 @@ export function dueLabel(dueOn: string | null, locale: Locale): DueLabel {
   if (!date) return { text: none, tone: "none" };
 
   const today = startOfToday();
-  const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
+  const days = daysUntilDue(dueOn);
+  if (days === null) return { text: none, tone: "none" };
   const short = formatShortDate(date, locale, date.getFullYear() !== today.getFullYear());
 
   if (days < 0) return { text: translate(locale, "due.overdue", { date: short }), tone: "over" };
@@ -155,21 +154,16 @@ export function priorityLabel(priority: TaskPriority, locale: Locale): string {
 export type BoardFilters = {
   query: string;
   priority: TaskPriority | "";
-  due: "" | "overdue" | "week" | "none";
+  due: "" | "overdue" | "today" | "week" | "none";
   tag: string;
 };
-
-export function daysUntilDue(dueOn: string | null): number | null {
-  const date = dueOn ? parseDueDate(dueOn) : null;
-  if (!date) return null;
-  return Math.round((date.getTime() - startOfToday().getTime()) / 86_400_000);
-}
 
 /** Client-side board filters: text search, priority, due date and tag. */
 export function filterTasks(
   tasks: Task[],
   filters: BoardFilters,
   tagsByTask: Map<number, string[]>,
+  now = new Date(),
 ): Task[] {
   const query = filters.query.trim().toLowerCase();
 
@@ -184,10 +178,11 @@ export function filterTasks(
     if (filters.priority && task.priority !== filters.priority) return false;
 
     if (filters.due) {
-      const days = daysUntilDue(task.due_on);
-      if (filters.due === "none" && task.due_on) return false;
-      if (filters.due === "overdue" && (days === null || days >= 0)) return false;
-      if (filters.due === "week" && (days === null || days < 0 || days > 7)) return false;
+      const bucket = dueBucket(task.due_on, now);
+      if (filters.due === "none" && bucket !== "none") return false;
+      if (filters.due === "overdue" && bucket !== "overdue") return false;
+      if (filters.due === "today" && bucket !== "today") return false;
+      if (filters.due === "week" && bucket !== "week") return false;
     }
 
     if (filters.tag) {

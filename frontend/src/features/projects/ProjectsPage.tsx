@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
 import type { ProjectPatch } from "../../api/types";
@@ -70,7 +70,25 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <AppBar />
+      <AppBar
+        right={
+          <div className="flex items-center gap-3">
+            <Link
+              to="/today"
+              className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+            >
+              {t("nav.today")}
+            </Link>
+            <a
+              href="/api/export"
+              download
+              className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+            >
+              {t("projects.export")}
+            </a>
+          </div>
+        }
+      />
 
       <main className="flex-1 px-5 py-8 md:px-12 md:py-12">
         <div className="w-full max-w-[1180px]">

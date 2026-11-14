@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Today view with overdue, today, and the next seven days; rows deep-link to the task dialog on the board.
+- JSON export through `todooshka export` and authenticated `GET /api/export`, including projects, tasks, checklists, tags, comments, and attachment metadata without attachment bytes or account data.
+
+### Changed
+
+- Shared app header is sticky on Projects, the board, and Today.
+- Board filters stay pinned; on desktop each column has its own scroll area and the page itself does not scroll.
+- The next-seven-days filter now means tomorrow through day seven; today has a separate filter option.
+- Done cards show the completion date instead of a relative due date.
+- On mobile, the active column name and counter appear once in the status tabs, with the add action beside them.
+
 ## [0.1.2] - 2026-11-14
 
 ### Added

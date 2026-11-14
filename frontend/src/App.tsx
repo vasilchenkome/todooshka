@@ -4,6 +4,7 @@ import LoginPage from "./features/auth/LoginPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import BoardPage from "./features/board/BoardPage";
 import ProjectsPage from "./features/projects/ProjectsPage";
+import TodayPage from "./features/today/TodayPage";
 
 export default function App() {
   return (
@@ -14,6 +15,14 @@ export default function App() {
         element={
           <RequireAuth>
             <ProjectsPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/today"
+        element={
+          <RequireAuth>
+            <TodayPage />
           </RequireAuth>
         }
       />

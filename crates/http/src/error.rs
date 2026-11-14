@@ -39,6 +39,10 @@ impl ApiError {
         Self::new(status, code, message_ru, message_en)
     }
 
+    pub fn bad_request(code: &'static str, ru: impl Into<String>, en: impl Into<String>) -> Self {
+        Self::new(StatusCode::BAD_REQUEST, code, ru, en)
+    }
+
     pub fn validation(message: impl Into<String>) -> Self {
         let message = message.into();
         Self::new(

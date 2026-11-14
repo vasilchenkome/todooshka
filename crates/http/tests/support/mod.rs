@@ -12,15 +12,15 @@ use http_body_util::BodyExt;
 use serde_json::Value;
 use tempfile::TempDir;
 use todooshka_app::{
-    AttachmentService, AuthService, Clock, CommentService, CreateUser, Login, PasswordHasher,
-    ProjectRepository, ProjectService, RepositoryError, SessionStore, SessionTokens,
-    SubtaskService, TagService, TaskService, TaskStore, UserStore,
+    AgendaService, AttachmentService, AuthService, Clock, CommentService, CreateUser,
+    ExportService, Login, PasswordHasher, ProjectRepository, ProjectService, RepositoryError,
+    SessionStore, SessionTokens, SubtaskService, TagService, TaskService, TaskStore, UserStore,
 };
 use todooshka_domain::{PasswordHash, Timestamp};
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter, router};
 use todooshka_sqlite::{
-    SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTags,
-    SqliteTasks, SqliteUsers, connect, migrate,
+    SqliteAgenda, SqliteAttachments, SqliteComments, SqliteExport, SqliteProjects, SqliteSessions,
+    SqliteSubtasks, SqliteTags, SqliteTasks, SqliteUsers, connect, migrate,
 };
 use tower::ServiceExt;
 
@@ -110,6 +110,13 @@ pub async fn app() -> TestApp {
         projects_repository,
         Arc::clone(&clock) as Arc<dyn Clock>,
     ));
+    let agenda = Arc::new(AgendaService::new(Arc::new(SqliteAgenda::new(
+        pool.clone(),
+    ))));
+    let export = Arc::new(ExportService::new(
+        Arc::new(SqliteExport::new(pool.clone())),
+        Arc::clone(&clock) as Arc<dyn Clock>,
+    ));
 
     let subtasks = Arc::new(SubtaskService::new(
         Arc::new(SqliteSubtasks::new(pool.clone())),
@@ -151,6 +158,8 @@ pub async fn app() -> TestApp {
         router: router(AppState {
             projects,
             tasks,
+            agenda,
+            export,
             subtasks,
             tags,
             comments,

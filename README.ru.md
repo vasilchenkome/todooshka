@@ -28,6 +28,9 @@ Todooshka — маленькая быстрая доска для одного �
 - Планирование: календарный срок, четыре приоритета, оценка в минутах.
 - Чек-листы с прогрессом на карточке.
 - Теги, поиск по тексту, фильтры по приоритету, сроку и тегу; состояние фильтров в URL.
+- Экран «Сегодня»: просроченные, сегодняшние и задачи следующих семи дней в одном read-only списке; строка открывает задачу на доске.
+- JSON-экспорт через CLI или `GET /api/export`: проекты, задачи, чек-листы, теги, комментарии и метаданные вложений. Байты вложений и данные учётной записи не выгружаются.
+- Sticky-шапка и фильтры; на desktop каждая колонка прокручивается отдельно, страница остаётся неподвижной.
 - Комментарии с правкой и удалением.
 - Вложения до 10 МБ, не больше 10 на задачу; файлы лежат в SQLite и попадают в обычный
   бэкап базы.
@@ -107,6 +110,7 @@ todooshka user passwd -u demo   # смена пароля отзывает вс�
 todooshka user list
 todooshka healthcheck             # 0, если /api/health/ready отвечает 200
 todooshka backup ./copy.db        # VACUUM INTO + integrity_check
+todooshka export ./todooshka.json # переносимый JSON-снимок
 ```
 
 Для скриптов и контейнера пароль передаётся одной строкой:
@@ -118,7 +122,7 @@ todooshka backup ./copy.db        # VACUUM INTO + integrity_check
 ## Проверки
 
 ```bash
-cd frontend && npm ci && npm run build && cd ..
+cd frontend && npm ci && npm test && npm run build && cd ..
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace

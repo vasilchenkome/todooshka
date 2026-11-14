@@ -16,13 +16,14 @@ use std::time::Duration;
 use async_trait::async_trait;
 use sqlx::SqlitePool;
 use todooshka_app::{
-    AttachmentService, AuthService, ChangePassword, Clock, CommentService, CreateUser,
-    ProjectRepository, ProjectService, SubtaskService, TagService, TaskService, TaskStore,
+    AgendaService, AttachmentService, AuthService, ChangePassword, Clock, CommentService,
+    CreateUser, ExportService, ProjectRepository, ProjectService, SubtaskService, TagService,
+    TaskService, TaskStore,
 };
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter};
 use todooshka_sqlite::{
-    SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTags,
-    SqliteTasks, SqliteUsers,
+    SqliteAgenda, SqliteAttachments, SqliteComments, SqliteExport, SqliteProjects, SqliteSessions,
+    SqliteSubtasks, SqliteTags, SqliteTasks, SqliteUsers,
 };
 
 use crate::clock::SystemClock;
@@ -57,6 +58,7 @@ async fn main() -> ExitCode {
         cli::Command::UserList => report(list_users().await),
         cli::Command::Healthcheck => report(healthcheck()),
         cli::Command::Backup { target } => report(backup_database(&target).await),
+        cli::Command::Export { target } => report(export_database(&target).await),
     }
 }
 
@@ -66,6 +68,20 @@ async fn backup_database(target: &str) -> Result<(), Box<dyn Error>> {
     todooshka_sqlite::backup_to(&pool, path).await?;
     let size = std::fs::metadata(path)?.len();
     println!("копия базы: {} ({} КБ)", path.display(), size / 1024);
+    pool.close().await;
+    Ok(())
+}
+
+async fn export_database(target: &str) -> Result<(), Box<dyn Error>> {
+    let pool = open_database().await?;
+    let export = ExportService::new(
+        Arc::new(SqliteExport::new(pool.clone())),
+        Arc::new(SystemClock),
+    );
+    let snapshot = export.export().await?;
+    let body = serde_json::to_vec_pretty(&snapshot)?;
+    std::fs::write(target, body)?;
+    println!("экспорт: {} ({} проектов)", target, snapshot.projects.len());
     pool.close().await;
     Ok(())
 }
@@ -139,6 +155,13 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         projects_repository,
         Arc::clone(&clock),
     ));
+    let agenda = Arc::new(AgendaService::new(Arc::new(SqliteAgenda::new(
+        pool.clone(),
+    ))));
+    let export = Arc::new(ExportService::new(
+        Arc::new(SqliteExport::new(pool.clone())),
+        Arc::clone(&clock),
+    ));
     let subtasks = Arc::new(SubtaskService::new(
         Arc::new(SqliteSubtasks::new(pool.clone())),
         Arc::clone(&clock),
@@ -163,6 +186,8 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
     let state = AppState {
         projects,
         tasks,
+        agenda,
+        export,
         subtasks,
         tags,
         comments,

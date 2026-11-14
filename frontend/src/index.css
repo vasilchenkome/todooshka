@@ -121,3 +121,23 @@
     }
   }
 }
+
+/* Board columns scroll without a visible bar; the focus ring stays. */
+.column-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.column-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* The board tabs scroll horizontally; a one-pixel vertical overflow must not show a bar. */
+.mobile-tabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-tabs::-webkit-scrollbar {
+  display: none;
+}

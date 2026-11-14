@@ -73,6 +73,42 @@ impl DueDate {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    /// Calendar addition without time zones: `2026-12-31 + 1` is `2027-01-01`.
+    pub fn plus_days(&self, days: i64) -> Option<Self> {
+        let target = civil_from_days(days_from_civil(self.as_str()) + days);
+        if !(1970..=2100).contains(&target.0) {
+            return None;
+        }
+        let value = format!("{:04}-{:02}-{:02}", target.0, target.1, target.2);
+        DueDate::parse(&value).ok()
+    }
+}
+
+fn days_from_civil(value: &str) -> i64 {
+    let year = value[0..4].parse::<i64>().expect("DueDate is validated");
+    let month = value[5..7].parse::<i64>().expect("DueDate is validated");
+    let day = value[8..10].parse::<i64>().expect("DueDate is validated");
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = if year >= 0 { year } else { year - 399 } / 400;
+    let year_of_era = year - era * 400;
+    let day_of_year = (153 * (month + if month > 2 { -3 } else { 9 }) + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
+}
+
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
+    let days = days + 719_468;
+    let era = if days >= 0 { days } else { days - 146_096 } / 146_097;
+    let day_of_era = days - era * 146_097;
+    let year_of_era =
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_part = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * month_part + 2) / 5 + 1;
+    let month = month_part + if month_part < 10 { 3 } else { -9 };
+    (year + i64::from(month <= 2), month, day)
 }
 
 fn parse_number(bytes: &[u8]) -> i64 {
@@ -213,5 +249,41 @@ mod tests {
             DomainError::InvalidEstimateMinutes
         );
         assert!(EstimateMinutes::parse(MAX_ESTIMATE_MINUTES + 1).is_err());
+    }
+
+    #[test]
+    fn adds_calendar_days_across_month_and_year_boundaries() {
+        assert_eq!(
+            DueDate::parse("2026-12-31")
+                .expect("дата")
+                .plus_days(1)
+                .expect("следующий год")
+                .as_str(),
+            "2027-01-01"
+        );
+        assert_eq!(
+            DueDate::parse("2028-02-28")
+                .expect("дата")
+                .plus_days(1)
+                .expect("високосный")
+                .as_str(),
+            "2028-02-29"
+        );
+        assert_eq!(
+            DueDate::parse("2026-02-28")
+                .expect("дата")
+                .plus_days(1)
+                .expect("невисокосный")
+                .as_str(),
+            "2026-03-01"
+        );
+        assert_eq!(
+            DueDate::parse("2026-11-14")
+                .expect("дата")
+                .plus_days(7)
+                .expect("неделя")
+                .as_str(),
+            "2026-11-21"
+        );
     }
 }

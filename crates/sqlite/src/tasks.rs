@@ -21,23 +21,23 @@ impl SqliteTasks {
 }
 
 #[derive(sqlx::FromRow)]
-struct TaskRow {
-    id: i64,
-    project_id: i64,
-    title: String,
-    description: String,
-    status: String,
-    position: f64,
-    created_at: i64,
-    updated_at: i64,
-    completed_at: Option<i64>,
-    due_on: Option<String>,
-    priority: String,
-    estimate_minutes: Option<i64>,
+pub(crate) struct TaskRow {
+    pub(crate) id: i64,
+    pub(crate) project_id: i64,
+    pub(crate) title: String,
+    pub(crate) description: String,
+    pub(crate) status: String,
+    pub(crate) position: f64,
+    pub(crate) created_at: i64,
+    pub(crate) updated_at: i64,
+    pub(crate) completed_at: Option<i64>,
+    pub(crate) due_on: Option<String>,
+    pub(crate) priority: String,
+    pub(crate) estimate_minutes: Option<i64>,
 }
 
 impl TaskRow {
-    fn into_domain(self) -> Result<Task, RepositoryError> {
+    pub(crate) fn into_domain(self) -> Result<Task, RepositoryError> {
         let status = TaskStatus::from_code(&self.status).ok_or_else(|| {
             RepositoryError::Corrupted(format!("неизвестный статус задачи {:?}", self.status))
         })?;

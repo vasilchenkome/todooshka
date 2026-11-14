@@ -18,6 +18,7 @@ export const ru = {
   "page.login": "Вход — todooshka",
   "page.projects": "Проекты — todooshka",
   "page.board": "Доска — todooshka",
+  "page.today": "Сегодня — todooshka",
   "page.project": "{name} — todooshka",
 
   "auth.loginTitle": "Вход",
@@ -28,6 +29,17 @@ export const ru = {
   "auth.signingIn": "вхожу…",
   "auth.loading": "загружаю…",
 
+  "nav.today": "сегодня",
+
+  "today.title": "Сегодня",
+  "today.summary": "{overdue} просрочено · {today} сегодня · {week} на неделе",
+  "today.overdue": "просрочено",
+  "today.today": "сегодня",
+  "today.week": "на неделе",
+  "today.empty": "на сегодня и неделю пусто",
+  "today.toProjects": "к проектам",
+
+  "projects.export": "экспорт",
   "projects.title": "Проекты",
   "projects.summary": "Активных: {active} · в архиве: {archived}. Цифры — задачи по колонкам.",
   "projects.loading": "загружаю проекты…",
@@ -47,6 +59,7 @@ export const ru = {
   "project.noTasks": "нет задач",
   "project.progress": "выполнено {done} из {total}",
 
+  "board.statusAria": "Статусы доски",
   "board.backAria": "К проектам",
   "board.back": "проекты",
   "board.fallback": "Доска",
@@ -54,8 +67,9 @@ export const ru = {
   "board.searchAria": "Поиск по задачам",
   "board.priorityAny": "приоритет: любой",
   "board.dueAny": "срок: любой",
+  "board.dueToday": "сегодня",
   "board.dueOverdue": "просрочено",
-  "board.dueWeek": "на неделю",
+  "board.dueWeek": "следующие 7 дней",
   "board.dueNone": "без срока",
   "board.tagAll": "тег: все",
   "board.reset": "сбросить",
@@ -82,6 +96,8 @@ export const ru = {
   "due.tomorrow": "завтра",
   "due.overdue": "просрочено · {date}",
 
+  "card.completedOn": "выполнено {date}",
+  "card.completed": "готово",
   "card.checklist": "чек-лист {done}/{total}",
 
   "estimate.none": "не задана",

@@ -1,11 +1,13 @@
 use async_trait::async_trait;
 use todooshka_domain::{
-    AttachmentId, AttachmentMeta, Comment, CommentId, PasswordHash, Project, ProjectDraft,
+    AttachmentId, AttachmentMeta, Comment, CommentId, DueDate, PasswordHash, Project, ProjectDraft,
     ProjectId, Subtask, SubtaskId, Tag, TagName, Task, TaskDraft, TaskId, TaskStatus, TaskTag,
     Timestamp, User, UserId, Username,
 };
 
+use crate::agenda::AgendaEntry;
 use crate::error::RepositoryError;
+use crate::export::ExportData;
 
 /// Project storage in the language of the domain.
 ///
@@ -21,6 +23,21 @@ pub trait ProjectRepository: Send + Sync {
     -> Result<Project, RepositoryError>;
 
     async fn save(&self, project: &Project) -> Result<(), RepositoryError>;
+}
+
+/// Read side of the Today screen: open tasks whose due date is on or before `through`.
+#[async_trait]
+pub trait AgendaReader: Send + Sync {
+    async fn list_open_due_until(
+        &self,
+        through: &DueDate,
+    ) -> Result<Vec<AgendaEntry>, RepositoryError>;
+}
+
+/// Full plain snapshot needed by the export; no auth tables are visible here.
+#[async_trait]
+pub trait ExportReader: Send + Sync {
+    async fn read(&self) -> Result<ExportData, RepositoryError>;
 }
 
 /// Time source: use cases never call the system clock, so tests stay deterministic.

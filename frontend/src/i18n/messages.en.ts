@@ -20,6 +20,7 @@ export const en = {
   "page.login": "Sign in — todooshka",
   "page.projects": "Projects — todooshka",
   "page.board": "Board — todooshka",
+  "page.today": "Today — todooshka",
   "page.project": "{name} — todooshka",
 
   "auth.loginTitle": "Sign in",
@@ -30,6 +31,17 @@ export const en = {
   "auth.signingIn": "signing in…",
   "auth.loading": "loading…",
 
+  "nav.today": "today",
+
+  "today.title": "Today",
+  "today.summary": "{overdue} overdue · {today} today · {week} this week",
+  "today.overdue": "overdue",
+  "today.today": "today",
+  "today.week": "this week",
+  "today.empty": "nothing for today or this week",
+  "today.toProjects": "to projects",
+
+  "projects.export": "export",
   "projects.title": "Projects",
   "projects.summary": "Active: {active} · archived: {archived}. Counts are tasks per column.",
   "projects.loading": "loading projects…",
@@ -49,6 +61,7 @@ export const en = {
   "project.noTasks": "no tasks",
   "project.progress": "{done} of {total} done",
 
+  "board.statusAria": "Board statuses",
   "board.backAria": "Back to projects",
   "board.back": "projects",
   "board.fallback": "Board",
@@ -56,6 +69,7 @@ export const en = {
   "board.searchAria": "Search tasks",
   "board.priorityAny": "priority: any",
   "board.dueAny": "due: any",
+  "board.dueToday": "today",
   "board.dueOverdue": "overdue",
   "board.dueWeek": "next 7 days",
   "board.dueNone": "no due date",
@@ -84,6 +98,8 @@ export const en = {
   "due.tomorrow": "tomorrow",
   "due.overdue": "overdue · {date}",
 
+  "card.completedOn": "completed {date}",
+  "card.completed": "done",
   "card.checklist": "checklist {done}/{total}",
 
   "estimate.none": "not set",

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   errorBodySchema,
+  agendaSchema,
   loginResponseSchema,
   projectListSchema,
   projectSchema,
@@ -18,6 +19,7 @@ import {
   type Project,
   type ProjectInput,
   type ProjectPatch,
+  type Agenda,
   type Attachment,
   type Comment,
   type Subtask,
@@ -117,6 +119,13 @@ export const api = {
       `/api/projects/${id}`,
       { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(patch) },
       (data) => projectSchema.parse(data),
+    ),
+
+  agenda: (today: string): Promise<Agenda> =>
+    request(
+      `/api/agenda?today=${encodeURIComponent(today)}`,
+      { method: "GET" },
+      (data) => agendaSchema.parse(data),
     ),
 
   listTasks: (projectId: number): Promise<Task[]> =>

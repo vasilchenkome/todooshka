@@ -20,6 +20,7 @@ type BoardColumnProps = {
   accent?: boolean;
   activeOnMobile: boolean;
   creating: boolean;
+  addRequest?: number;
   onOpenTask: (task: Task) => void;
   onCreate: (status: TaskStatus, title: string) => Promise<void>;
 };
@@ -39,6 +40,7 @@ export function BoardColumn({
   accent = false,
   activeOnMobile,
   creating,
+  addRequest = 0,
   onOpenTask,
   onCreate,
 }: BoardColumnProps) {
@@ -49,6 +51,12 @@ export function BoardColumn({
   const [showAll, setShowAll] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (addRequest > 0) {
+      setAdding(true);
+    }
+  }, [addRequest]);
 
   useEffect(() => {
     if (!adding) return;
@@ -88,12 +96,12 @@ export function BoardColumn({
     <section
       ref={setNodeRef}
       aria-label={title}
-      className={`${activeOnMobile ? "flex" : "hidden"} min-h-[360px] flex-col px-3 pt-6 pb-8 transition-colors md:flex md:min-h-[calc(100dvh-112px)] ${
+      className={`${activeOnMobile ? "flex" : "hidden"} min-h-0 flex-1 flex-col px-3 pt-5 pb-0 transition-colors md:flex md:min-h-0 md:pt-6 ${
         isOver ? "bg-hover" : ""
       }`}
     >
       <div
-        className={`mx-1 flex items-end justify-between gap-3 border-b pb-3 md:mx-3 ${
+        className={`mx-1 hidden items-end justify-between gap-3 border-b pb-3 md:mx-3 md:flex ${
           accent ? "border-b-2 border-signal" : "border-ink"
         }`}
       >
@@ -173,37 +181,44 @@ export function BoardColumn({
         </form>
       )}
 
-      <SortableContext items={visible.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-        {tasks.length === 0 && !filtered && !adding && (
-          <p className="mx-4 mt-4 text-[13px] text-steel">
-            {t("board.emptyColumn")}
-          </p>
-        )}
-        <ul className="mt-0 flex-1">
-          {visible.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              number={numbers.get(task.id) ?? task.id}
-              subtasks={subtasks.get(task.id)}
-              tags={tags.get(task.id)}
-              comments={comments.get(task.id) ?? 0}
-              attachments={attachments.get(task.id) ?? 0}
-              onOpen={onOpenTask}
-            />
-          ))}
-        </ul>
-      </SortableContext>
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label={title}
+        className="column-scroll mt-2 min-h-0 flex-1 overflow-y-auto"
+      >
+        <SortableContext items={visible.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+          {tasks.length === 0 && !filtered && !adding && (
+            <p className="mx-4 mt-4 text-[13px] text-steel">
+              {t("board.emptyColumn")}
+            </p>
+          )}
+          <ul className="mt-0">
+            {visible.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                number={numbers.get(task.id) ?? task.id}
+                subtasks={subtasks.get(task.id)}
+                tags={tags.get(task.id)}
+                comments={comments.get(task.id) ?? 0}
+                attachments={attachments.get(task.id) ?? 0}
+                onOpen={onOpenTask}
+              />
+            ))}
+          </ul>
 
-      {hiddenCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowAll(true)}
-          className="mx-4 mt-3.5 self-start border-b border-rule pb-0.5 text-[12px] text-steel hover:border-ink hover:text-ink"
-        >
-          {t("board.showMore", { count: hiddenCount })}
-        </button>
-      )}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="mx-4 mt-3.5 mb-4 self-start border-b border-rule pb-0.5 text-[12px] text-steel hover:border-ink hover:text-ink"
+            >
+              {t("board.showMore", { count: hiddenCount })}
+            </button>
+          )}
+        </SortableContext>
+      </div>
     </section>
   );
 }

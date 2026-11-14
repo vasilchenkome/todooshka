@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use todooshka_app::Agenda;
 use todooshka_domain::{DueDate, EstimateMinutes, Planning, Priority, Project, Task};
 
 /// Project on the wire: flat fields, times in unix seconds. The domain does not leak here.
@@ -308,4 +309,56 @@ impl UserDto {
 pub struct LoginResponse {
     pub user: UserDto,
     pub expires_at: i64,
+}
+
+/// One agenda row: project context plus the fields the Today screen needs.
+#[derive(Debug, Serialize)]
+pub struct AgendaTaskDto {
+    pub project_id: i64,
+    pub project_name: String,
+    pub task_id: i64,
+    pub title: String,
+    pub due_on: String,
+    pub priority: &'static str,
+    pub status: &'static str,
+}
+
+impl From<&todooshka_app::AgendaEntry> for AgendaTaskDto {
+    fn from(entry: &todooshka_app::AgendaEntry) -> Self {
+        let due_on = entry
+            .task
+            .planning()
+            .due_on()
+            .map(DueDate::as_str)
+            .unwrap_or_default()
+            .to_owned();
+        Self {
+            project_id: entry.project_id.as_raw(),
+            project_name: entry.project_name.clone(),
+            task_id: entry.task.id().as_raw(),
+            title: entry.task.title().as_str().to_owned(),
+            due_on,
+            priority: entry.task.planning().priority().as_code(),
+            status: entry.task.status().as_code(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct AgendaDto {
+    pub date: String,
+    pub overdue: Vec<AgendaTaskDto>,
+    pub today: Vec<AgendaTaskDto>,
+    pub week: Vec<AgendaTaskDto>,
+}
+
+impl From<&Agenda> for AgendaDto {
+    fn from(agenda: &Agenda) -> Self {
+        Self {
+            date: agenda.date.as_str().to_owned(),
+            overdue: agenda.overdue.iter().map(AgendaTaskDto::from).collect(),
+            today: agenda.today.iter().map(AgendaTaskDto::from).collect(),
+            week: agenda.week.iter().map(AgendaTaskDto::from).collect(),
+        }
+    }
 }
