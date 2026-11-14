@@ -16,7 +16,7 @@ use todooshka_app::{
     RepositoryError, SessionStore, SessionTokens, TaskService, TaskStore, UserStore,
 };
 use todooshka_domain::{PasswordHash, Timestamp};
-use todooshka_http::{AppState, auth::LoginLimiter, router};
+use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter, router};
 use todooshka_sqlite::{
     SqliteProjects, SqliteSessions, SqliteTasks, SqliteUsers, connect, migrate,
 };
@@ -49,6 +49,16 @@ impl PasswordHasher for TestHasher {
 
     fn verify(&self, password: &str, hash: &PasswordHash) -> bool {
         hash.as_str() == format!("fake:{password}")
+    }
+}
+
+/// Готовность в тестах: база уже открыта и мигрирована.
+pub struct ReadyProbe;
+
+#[async_trait::async_trait]
+impl ReadinessProbe for ReadyProbe {
+    async fn check(&self) -> bool {
+        true
     }
 }
 
@@ -128,6 +138,7 @@ pub async fn app() -> TestApp {
             auth: Arc::clone(&auth),
             login_limiter: LoginLimiter::default(),
             cookie_secure: false,
+            readiness: Arc::new(ReadyProbe),
         }),
         cookie: format!("todooshka_session={}", issued.token),
         auth,

@@ -7,10 +7,13 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+async-trait.workspace = true
 axum.workspace = true
+rust-embed.workspace = true
 serde.workspace = true
 todooshka-app.workspace = true
 todooshka-domain.workspace = true
+tower-http.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
