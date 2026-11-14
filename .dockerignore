@@ -1,5 +1,6 @@
 .git
 .gitignore
+.gitattributes
 docs
 target
 frontend/node_modules
@@ -7,5 +8,6 @@ frontend/dist
 **/*.db
 **/*.db-wal
 **/*.db-shm
+*.log
 .env
 .env.*
