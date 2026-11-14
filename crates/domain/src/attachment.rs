@@ -2,9 +2,9 @@ use crate::error::DomainError;
 use crate::task::TaskId;
 use crate::time::Timestamp;
 
-/// Лимит одного файла: больше в личном трекере не прикрепляют.
+/// Per-file limit: a personal tracker never attaches more than this.
 pub const MAX_ATTACHMENT_BYTES: usize = 10 * 1024 * 1024;
-/// Лимит файлов на задачу.
+/// Limit of files per task.
 pub const MAX_ATTACHMENTS_PER_TASK: usize = 10;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -26,7 +26,7 @@ impl std::fmt::Display for AttachmentId {
     }
 }
 
-/// Имя файла без пути: последний сегмент, обрезанный, до 255 символов.
+/// File name without a path: the last segment, trimmed, up to 255 characters.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AttachmentFilename(String);
 
@@ -57,7 +57,7 @@ impl AttachmentFilename {
     }
 }
 
-/// Тип файла определяется расширением: содержимому от клиента не доверяем.
+/// The file type comes from the extension: client content is not trusted.
 pub fn content_type_for(filename: &str) -> &'static str {
     let extension = filename
         .rsplit('.')

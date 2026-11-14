@@ -135,7 +135,7 @@ async fn dropped_transaction_rolls_back() {
             .move_to(TaskStatus::Done, 1.0, now(200))
             .expect("перенос");
         transaction.save(&stored).await.expect("запись");
-        // Без commit: транзакция должна откатиться при уничтожении.
+        // No commit: the transaction must roll back when dropped.
     }
 
     let mut check = db.tasks.transaction().await.expect("транзакция");

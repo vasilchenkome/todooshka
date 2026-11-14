@@ -29,7 +29,7 @@ const PRIORITY_TEXT: Record<Task["priority"], string> = {
   urgent: "text-signal",
 };
 
-/** Карточка задачи: строка, а не «облако»; номер и дата — табличными цифрами. */
+/** Task card: a row, not a "cloud"; the number and date use tabular figures. */
 export function TaskCard({
   task,
   number,

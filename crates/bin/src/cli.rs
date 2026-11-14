@@ -1,4 +1,4 @@
-//! Разбор аргументов командной строки без внешних парсеров: команд мало и они плоские.
+//! Command-line parsing without external crates: there are few commands and they are flat.
 
 use std::ffi::OsString;
 
@@ -18,7 +18,7 @@ Todooshka — Kanban по рабочим проектам.
   -h, --help         эта справка
 ";
 
-/// Что просили сделать при запуске.
+/// What the caller asked for at startup.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Serve,
@@ -53,7 +53,7 @@ pub enum CliError {
     MissingBackupPath,
 }
 
-/// Разбирает аргументы без имени программы. `--help` и `help` печатают справку.
+/// Parses the arguments without the program name. `--help` and `help` print usage.
 pub fn parse(args: impl IntoIterator<Item = OsString>) -> Result<Command, CliError> {
     let args = args
         .into_iter()

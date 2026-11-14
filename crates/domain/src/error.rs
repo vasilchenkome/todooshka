@@ -1,4 +1,4 @@
-/// Ошибки бизнес-правил. Как их показывать — решает HTTP-слой, не домен.
+/// Business-rule errors. How to show them is up to the HTTP layer, not the domain.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum DomainError {
     #[error("название проекта не может быть пустым")]

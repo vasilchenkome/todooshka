@@ -1,4 +1,4 @@
-//! Копия базы для бэкапа: `VACUUM INTO` и проверка целостности копии.
+//! Database backup copy: `VACUUM INTO` plus an integrity check of the copy.
 
 use std::path::Path;
 
@@ -6,9 +6,9 @@ use sqlx::SqlitePool;
 
 use crate::error::StorageError;
 
-/// Снимает согласованную копию базы в новый файл и проверяет её `integrity_check`.
+/// Takes a consistent copy of the database into a new file and runs `integrity_check`.
 ///
-/// `VACUUM INTO` не перезаписывает существующий файл: старые копии не затираются молча.
+/// `VACUUM INTO` never overwrites an existing file: old copies are not wiped silently.
 pub async fn backup_to(pool: &SqlitePool, target: &Path) -> Result<(), StorageError> {
     if target.exists() {
         return Err(StorageError::Backup(format!(

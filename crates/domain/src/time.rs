@@ -1,7 +1,7 @@
-/// Момент времени в unix-секундах: домен не зависит от библиотек дат и часов.
+/// A point in time in unix seconds: the domain relies on no date or clock crate.
 ///
-/// Время приходит из порта `Clock` на уровне сценариев, поэтому правила
-/// и тесты остаются детерминированными.
+/// Time comes from the `Clock` port at the use-case level, so the rules
+/// and the tests stay deterministic.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Timestamp(i64);
 

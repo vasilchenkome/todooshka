@@ -43,7 +43,7 @@ type TaskDialogProps = {
   onDeleteAttachment: (id: number) => Promise<void>;
 };
 
-/** Диалог задачи: правка текста, планирование, смена колонки и удаление. */
+/** Task dialog: edit text, planning, column change and deletion. */
 export function TaskDialog({
   task,
   busy,
@@ -122,7 +122,7 @@ export function TaskDialog({
       });
       onClose();
     } catch {
-      // Ошибка отображается на доске, диалог остаётся открытым.
+      // The error is shown on the board; the dialog stays open.
     }
   }
 
@@ -146,7 +146,7 @@ export function TaskDialog({
       await onDelete();
       onClose();
     } catch {
-      // Ошибка отображается на доске.
+      // The error is shown on the board.
     }
   }
 
@@ -164,7 +164,7 @@ export function TaskDialog({
       await onReplaceTags([...tags, name]);
       setTagDraft("");
     } catch {
-      // Ошибку показывает доска.
+      // The board shows the error.
     }
   }
 
@@ -172,7 +172,7 @@ export function TaskDialog({
     try {
       await onReplaceTags(tags.filter((tag) => tag !== name));
     } catch {
-      // Ошибку показывает доска.
+      // The board shows the error.
     }
   }
 
@@ -181,7 +181,7 @@ export function TaskDialog({
     try {
       await onUploadAttachment(file);
     } catch {
-      // Ошибку показывает доска.
+      // The board shows the error.
     } finally {
       setUploadBusy(false);
     }
@@ -194,7 +194,7 @@ export function TaskDialog({
       await onCreateComment(body);
       setCommentDraft("");
     } catch {
-      // Ошибку показывает доска.
+      // The board shows the error.
     }
   }
 
@@ -207,7 +207,7 @@ export function TaskDialog({
       setEditingComment(null);
       setEditingBody("");
     } catch {
-      // Ошибку показывает доска.
+      // The board shows the error.
     }
   }
 
@@ -219,7 +219,7 @@ export function TaskDialog({
       await onCreateSubtask(title);
       setSubtaskDraft("");
     } catch {
-      // Ошибку показывает доска, поле остаётся с текстом.
+      // The board shows the error; the field keeps its text.
     } finally {
       setSubtaskBusy(false);
     }

@@ -7,7 +7,7 @@ use todooshka_domain::{
 use crate::error::ApplicationError;
 use crate::ports::{Clock, ProjectRepository, ProjectTaskCount, TaskStore, TaskTransaction};
 
-/// Добавить задачу в конец выбранной колонки.
+/// Add a task to the end of the chosen column.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AddTask {
     pub project_id: ProjectId,
@@ -16,7 +16,7 @@ pub struct AddTask {
     pub status: TaskStatus,
 }
 
-/// Изменить содержимое задачи; поля, которых нет в команде, не трогаются.
+/// Edit the task's content; fields missing from the command are left untouched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EditTask {
     pub id: TaskId,
@@ -25,7 +25,7 @@ pub struct EditTask {
     pub planning: Option<Planning>,
 }
 
-/// Перенести задачу в колонку на нужное место (индекс в колонке, 0 — начало).
+/// Move a task into a column at a given spot (index in the column, 0 is the top).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MoveTask {
     pub id: TaskId,
@@ -33,7 +33,7 @@ pub struct MoveTask {
     pub target_index: usize,
 }
 
-/// Сценарии задач доски.
+/// Board task use cases.
 pub struct TaskService {
     tasks: Arc<dyn TaskStore>,
     projects: Arc<dyn ProjectRepository>,
@@ -82,7 +82,7 @@ impl TaskService {
         Ok(tasks)
     }
 
-    /// Счётчики задач по всем проектам: список проектов показывает их вместо N+1 запросов.
+    /// Task counters for all projects: the project list uses them instead of N+1 queries.
     pub async fn counts_by_project(&self) -> Result<Vec<ProjectTaskCount>, ApplicationError> {
         Ok(self.tasks.counts_by_project().await?)
     }
@@ -128,10 +128,10 @@ impl TaskService {
         Ok(task)
     }
 
-    /// Перенос задачи: чтение колонки, выбор позиции и запись — в одной транзакции.
+    /// Moving a task: reading the column, picking a position and writing in one transaction.
     ///
-    /// Индекс за пределами колонки трактуется как «в конец»: это ожидаемое поведение
-    /// drag&drop, когда карточку бросают ниже последней.
+    /// An index past the column end means "append": the expected drag&drop
+    /// behaviour when a card is dropped below the last one.
     pub async fn move_task(&self, command: MoveTask) -> Result<Task, ApplicationError> {
         let now = self.clock.now();
         let mut transaction = self.tasks.transaction().await?;
@@ -184,15 +184,15 @@ impl TaskService {
     }
 }
 
-/// Позиция для вставки на `index` в уже отсортированной колонке без самой задачи.
+/// Position for an insert at `index` in an already sorted column without the task itself.
 fn position_for(column: &[Task], index: usize) -> Option<f64> {
     let before = index.checked_sub(1).map(|index| column[index].position());
     let after = column.get(index).map(|task| task.position());
     between(before, after)
 }
 
-/// Перенумеровывает колонку ровными шагами, не трогая метки времени:
-/// это служебная операция, а не правка задачи пользователем.
+/// Renumbers the column in even steps without touching timestamps:
+/// it is a maintenance operation, not a user edit of the task.
 async fn renumber_column(
     transaction: &mut dyn TaskTransaction,
     column: &mut [Task],

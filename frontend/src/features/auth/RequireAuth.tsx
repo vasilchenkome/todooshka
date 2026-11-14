@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { useI18n } from "../../i18n";
 import { useAuth } from "./AuthContext";
 
-/** Пока сессия проверяется — тихая заглушка, потом либо экран, либо вход. */
+/** While the session is checked, a quiet placeholder; then either the screen or the login. */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const { t } = useI18n();

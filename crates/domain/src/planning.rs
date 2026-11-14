@@ -1,9 +1,9 @@
 use crate::error::DomainError;
 
-/// Верхняя граница оценки: больше суток на задачу в личном трекере не планируют.
+/// Upper bound for an estimate: a personal tracker plans at most a day per task.
 pub const MAX_ESTIMATE_MINUTES: i64 = 100_000;
 
-/// Приоритет задачи: четыре уровня, порядок — от низкого к срочному.
+/// Task priority: four levels, ordered from low to urgent.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Low,
@@ -36,7 +36,7 @@ impl Priority {
     }
 }
 
-/// Календарная дата без времени: `YYYY-MM-DD`, сравнение — по строке.
+/// Calendar date without a time: `YYYY-MM-DD`, compared as a string.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DueDate(String);
 
@@ -95,7 +95,7 @@ fn is_leap_year(year: i64) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
 
-/// Оценка времени в минутах: от 1 до `MAX_ESTIMATE_MINUTES`.
+/// Time estimate in minutes: from 1 to `MAX_ESTIMATE_MINUTES`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EstimateMinutes(i64);
 
@@ -113,7 +113,7 @@ impl EstimateMinutes {
     }
 }
 
-/// Планирование задачи: срок, приоритет и оценка — цельный набор.
+/// Task planning: due date, priority and estimate as one cohesive set.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Planning {
     due_on: Option<DueDate>,

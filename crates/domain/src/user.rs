@@ -1,7 +1,7 @@
 use crate::error::DomainError;
 use crate::time::Timestamp;
 
-/// Ограничения учётной записи: логин короткий, пароль длинный.
+/// Account constraints: the login is short, the password is long.
 pub const MAX_USERNAME_CHARS: usize = 64;
 pub const MIN_PASSWORD_CHARS: usize = 10;
 
@@ -24,7 +24,7 @@ impl std::fmt::Display for UserId {
     }
 }
 
-/// Логин: обрезан по краям, не пустой, без управляющих символов.
+/// Login: trimmed, non-empty, no control characters.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Username(String);
 
@@ -56,7 +56,7 @@ impl std::fmt::Display for Username {
     }
 }
 
-/// Хеш пароля — непрозрачное значение: домен не знает, чем именно он посчитан.
+/// The password hash is an opaque value: the domain does not know how it was computed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PasswordHash(String);
 
@@ -73,7 +73,7 @@ impl PasswordHash {
     }
 }
 
-/// Учётная запись: логин, хеш пароля и момент создания.
+/// An account: login, password hash and creation moment.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct User {
     id: UserId,
@@ -114,7 +114,7 @@ impl User {
     }
 }
 
-/// Политика пароля проверяется до хеширования: минимум символов и не только пробелы.
+/// The password policy is checked before hashing: a minimum length and not only spaces.
 pub fn validate_password(password: &str) -> Result<(), DomainError> {
     if password.chars().count() < MIN_PASSWORD_CHARS {
         return Err(DomainError::WeakPassword {

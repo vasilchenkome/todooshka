@@ -1,4 +1,4 @@
-/// Ошибки хранилища: разбор адреса, открытие пула, применение миграций.
+/// Storage errors: parsing the address, opening the pool, applying migrations.
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
     #[error("DATABASE_URL должен начинаться с sqlite://, получено {0:?}")]

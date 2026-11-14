@@ -13,10 +13,10 @@ use crate::dto::{LoginRequest, LoginResponse, UserDto};
 use crate::error::ApiError;
 use crate::state::AppState;
 
-/// Имя cookie сессии. Одно место, где оно вообще упоминается.
+/// Session cookie name. The single place it is mentioned.
 pub const SESSION_COOKIE: &str = "todooshka_session";
 
-/// Не больше 5 неудачных попыток в минуту на логин: без IP и внешних зависимостей.
+/// At most 5 failed attempts per minute per login: no IP tracking, no external crates.
 #[derive(Clone, Default)]
 pub struct LoginLimiter {
     attempts: Arc<Mutex<HashMap<String, Vec<Instant>>>>,
@@ -57,7 +57,7 @@ fn normalize(username: &str) -> String {
     username.trim().to_lowercase()
 }
 
-/// Достаёт токен из заголовка `Cookie`; других cookie приложению не нужно.
+/// Pulls the token out of the `Cookie` header; the app needs no other cookies.
 pub fn session_token(headers: &axum::http::HeaderMap) -> Option<String> {
     headers
         .get_all(header::COOKIE)
@@ -71,7 +71,7 @@ pub fn session_token(headers: &axum::http::HeaderMap) -> Option<String> {
         .find(|value| !value.is_empty())
 }
 
-/// Middleware: всё, что ниже, требует валидную сессию.
+/// Middleware: everything below requires a valid session.
 pub async fn require_session(
     State(state): State<AppState>,
     mut request: Request,

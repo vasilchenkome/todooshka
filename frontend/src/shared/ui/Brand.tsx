@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-/** Знак и имя приложения: марка есть на всех экранах. */
+/** App mark and name: the brand appears on every screen. */
 export function Brand() {
   return (
     <Link

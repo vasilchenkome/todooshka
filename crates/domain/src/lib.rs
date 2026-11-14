@@ -1,7 +1,7 @@
-//! Ядро домена: сущности, инварианты и правила задач и проектов.
+//! Domain core: entities, invariants and the rules for tasks and projects.
 //!
-//! Крейт намеренно не зависит от axum, sqlx, tokio, конфигурации и форматов API:
-//! зависимости направлены только внутрь, к бизнес-правилам.
+//! The crate deliberately ignores axum, sqlx, tokio, config and API formats:
+//! dependencies point inward only, towards the business rules.
 
 mod attachment;
 mod comment;

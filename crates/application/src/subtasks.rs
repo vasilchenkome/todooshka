@@ -5,7 +5,7 @@ use todooshka_domain::{ProjectId, Subtask, SubtaskId, SubtaskTitle, TaskId};
 use crate::error::ApplicationError;
 use crate::ports::{Clock, SubtaskStore};
 
-/// Сценарии чек-листа: добавить, переименовать, отметить, удалить.
+/// Checklist use cases: add, rename, tick off, delete.
 pub struct SubtaskService {
     subtasks: Arc<dyn SubtaskStore>,
     clock: Arc<dyn Clock>,

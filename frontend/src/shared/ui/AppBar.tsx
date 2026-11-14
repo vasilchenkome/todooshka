@@ -9,7 +9,7 @@ type AppBarProps = {
   left?: ReactNode;
 };
 
-/** Верхняя полоса приложения: марка, контекст экрана и текущий пользователь. */
+/** App top bar: brand, screen context and the current user. */
 export function AppBar({ left }: AppBarProps) {
   const { user, logout } = useAuth();
   const { t } = useI18n();

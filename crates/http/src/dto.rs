@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use todooshka_domain::{DueDate, EstimateMinutes, Planning, Priority, Project, Task};
 
-/// Проект на проводе: плоские поля, время в unix-секундах. Домен сюда не протекает.
+/// Project on the wire: flat fields, times in unix seconds. The domain does not leak here.
 #[derive(Debug, Serialize)]
 pub struct ProjectDto {
     pub id: i64,
@@ -36,7 +36,7 @@ pub struct StatusCounts {
     pub done: i64,
 }
 
-/// Строка списка проектов: поля проекта и счётчики задач по колонкам.
+/// A project list row: the project fields plus per-column task counters.
 #[derive(Debug, Serialize)]
 pub struct ProjectListEntryDto {
     #[serde(flatten)]
@@ -53,7 +53,7 @@ pub struct CreateProjectRequest {
     pub color: Option<String>,
 }
 
-/// PATCH: отсутствующее поле не меняется, `null` для строк — ошибка формата.
+/// PATCH: a missing field stays unchanged, `null` for strings is a format error.
 #[derive(Debug, Deserialize)]
 pub struct UpdateProjectRequest {
     #[serde(default)]
@@ -72,7 +72,7 @@ pub struct ListQuery {
     pub include_archived: bool,
 }
 
-/// Задача на проводе: статус — строковый код, позиция — дробное число колонки.
+/// Task on the wire: the status is a string code, the position a fractional column number.
 #[derive(Debug, Serialize)]
 pub struct TaskDto {
     pub id: i64,
@@ -253,7 +253,7 @@ pub struct EditTaskRequest {
     pub planning: Option<PlanningRequest>,
 }
 
-/// Планирование в PATCH: объект присутствует — набор заменяется целиком.
+/// Planning in PATCH: when the object is present the whole set is replaced.
 #[derive(Debug, Deserialize)]
 pub struct PlanningRequest {
     #[serde(default)]

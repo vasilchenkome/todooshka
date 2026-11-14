@@ -16,7 +16,7 @@ impl TagId {
     }
 }
 
-/// Имя тега: без ведущей решётки, обрезано, до 32 символов.
+/// Tag name: no leading hash, trimmed, up to 32 characters.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TagName(String);
 
@@ -57,7 +57,7 @@ impl Tag {
     }
 }
 
-/// Связь тега с задачей: доска получает все связи проекта одним запросом.
+/// A tag-to-task link: the board loads all links of a project in one query.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TaskTag {
     pub task_id: TaskId,

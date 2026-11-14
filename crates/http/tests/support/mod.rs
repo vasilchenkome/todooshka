@@ -1,4 +1,4 @@
-//! Общая обвязка интеграционных тестов: приложение на временной SQLite с активной сессией.
+//! Shared integration-test harness: an app on a temporary SQLite with an active session.
 #![allow(dead_code)]
 
 use std::sync::Arc;
@@ -41,7 +41,7 @@ impl Clock for FixedClock {
     }
 }
 
-/// Быстрый детерминированный хешер: тесты про HTTP, а не про Argon2.
+/// Fast deterministic hasher: these tests are about HTTP, not about Argon2.
 pub struct TestHasher;
 
 impl PasswordHasher for TestHasher {
@@ -54,7 +54,7 @@ impl PasswordHasher for TestHasher {
     }
 }
 
-/// Готовность в тестах: база уже открыта и мигрирована.
+/// Readiness in tests: the database is already open and migrated.
 pub struct ReadyProbe;
 
 #[async_trait::async_trait]
@@ -64,7 +64,7 @@ impl ReadinessProbe for ReadyProbe {
     }
 }
 
-/// Детерминированные токены: в БД уходит только хеш.
+/// Deterministic tokens: only the hash reaches the DB.
 pub struct TestTokens(AtomicI64);
 
 impl SessionTokens for TestTokens {
@@ -88,7 +88,7 @@ pub struct TestApp {
     _dir: TempDir,
 }
 
-/// Приложение с созданным пользователем и одной живой сессией.
+/// An app with a created user and one live session.
 pub async fn app() -> TestApp {
     let dir = tempfile::tempdir().expect("временная папка");
     let path = dir.path().join("todooshka.db");
@@ -167,7 +167,7 @@ pub async fn app() -> TestApp {
     }
 }
 
-/// Сырой запрос: нужен тестам, которые смотрят на заголовки ответа.
+/// Raw request: needed by tests that look at response headers.
 pub async fn send(
     app: &TestApp,
     method: Method,

@@ -12,7 +12,7 @@ type ProjectRowProps = {
   onToggleArchive: () => void;
 };
 
-/** Строка проекта: имя, описание, счётчики задач и прогресс. */
+/** Project row: name, description, task counters and progress. */
 export function ProjectRow({
   project,
   archived,

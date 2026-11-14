@@ -8,8 +8,8 @@ use todooshka_domain::{
 
 use crate::mapping::{corrupted, unavailable};
 
-/// SQLite-реализация порта задач. Перенос выполняется в Unit of Work:
-/// транзакция открывается здесь, а коммит делает сценарий.
+/// SQLite implementation of the task port. A move runs as a Unit of Work:
+/// the transaction opens here and the use case commits it.
 pub struct SqliteTasks {
     pool: SqlitePool,
 }
@@ -201,7 +201,7 @@ impl TaskTransaction for SqliteTaskTransaction {
         let completed_at = status.is_done().then(|| now.as_unix_seconds());
         let tx = self.tx()?;
 
-        // Позиция в конце колонки считается тем же запросом, что и вставка.
+        // The end-of-column position is computed by the same query as the insert.
         let row: TaskRow = sqlx::query_as(
             "INSERT INTO tasks
                 (project_id, title, description, status, position, created_at, updated_at,

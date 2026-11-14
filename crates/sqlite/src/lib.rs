@@ -1,6 +1,6 @@
-//! Адаптер хранения: SQLite через sqlx, реализации портов и миграции.
+//! Storage adapter: SQLite through sqlx, port implementations and migrations.
 //!
-//! Здесь живут SQL, маппинг строк в доменные объекты и транзакции; бизнес-правил нет.
+//! SQL, row-to-domain mapping and transactions live here; no business rules.
 
 mod attachments;
 mod backup;

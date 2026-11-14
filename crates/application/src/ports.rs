@@ -7,10 +7,10 @@ use todooshka_domain::{
 
 use crate::error::RepositoryError;
 
-/// Хранилище проектов на языке домена.
+/// Project storage in the language of the domain.
 ///
-/// Контракт: `list` возвращает активные проекты (или все с архивными) в порядке доски,
-/// а `create` сам выбирает позицию в конце списка — это деталь хранения, не сценария.
+/// Contract: `list` returns active projects (or all, with archived ones) in board order,
+/// and `create` picks the end position itself — a storage detail, not a use-case one.
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
     async fn list(&self, include_archived: bool) -> Result<Vec<Project>, RepositoryError>;
@@ -23,12 +23,12 @@ pub trait ProjectRepository: Send + Sync {
     async fn save(&self, project: &Project) -> Result<(), RepositoryError>;
 }
 
-/// Источник времени: сценарии не вызывают системные часы напрямую, тесты — детерминированы.
+/// Time source: use cases never call the system clock, so tests stay deterministic.
 pub trait Clock: Send + Sync {
     fn now(&self) -> Timestamp;
 }
 
-/// Сколько задач проекта в каждой колонке: один запрос на все проекты доски.
+/// How many of a project's tasks sit in each column: one query for every board project.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ProjectTaskCount {
     pub project_id: ProjectId,
@@ -36,7 +36,7 @@ pub struct ProjectTaskCount {
     pub tasks: i64,
 }
 
-/// Хранилище задач: чтение доски и короткие операции поверх транзакции.
+/// Task storage: board reads and short operations on top of a transaction.
 #[async_trait]
 pub trait TaskStore: Send + Sync {
     async fn list_by_project(&self, project_id: ProjectId) -> Result<Vec<Task>, RepositoryError>;
@@ -45,15 +45,15 @@ pub trait TaskStore: Send + Sync {
 
     async fn delete(&self, id: TaskId) -> Result<bool, RepositoryError>;
 
-    /// Открывает Unit of Work: все изменения внутри идут одной транзакцией.
+    /// Opens a Unit of Work: every change inside goes through a single transaction.
     async fn transaction(&self) -> Result<Box<dyn TaskTransaction>, RepositoryError>;
 }
 
-/// Транзакция задач: перенос колонки должен быть атомарным, поэтому чтение и запись
-/// выполняются в одном Unit of Work, а коммит остаётся за сценарием.
+/// Task transaction: a column move must be atomic, so reads and writes share
+/// one Unit of Work while the commit stays with the use case.
 #[async_trait]
 pub trait TaskTransaction: Send + Sync {
-    /// Задачи колонки в порядке доски (по позиции, затем по id).
+    /// The column's tasks in board order (by position, then by id).
     async fn list_column(
         &mut self,
         project_id: ProjectId,
@@ -62,7 +62,7 @@ pub trait TaskTransaction: Send + Sync {
 
     async fn get(&mut self, id: TaskId) -> Result<Option<Task>, RepositoryError>;
 
-    /// Ставит задачу в конец колонки: позицию выбирает хранилище.
+    /// Appends the task to the end of the column: the storage picks the position.
     async fn create(
         &mut self,
         project_id: ProjectId,
@@ -76,13 +76,13 @@ pub trait TaskTransaction: Send + Sync {
     async fn commit(&mut self) -> Result<(), RepositoryError>;
 }
 
-/// Чек-лист задачи: пункты читаются пачкой по проекту, операции точечные.
+/// Task checklist: items are read in bulk per project, operations are targeted.
 #[async_trait]
 pub trait SubtaskStore: Send + Sync {
     async fn list_by_project(&self, project_id: ProjectId)
     -> Result<Vec<Subtask>, RepositoryError>;
 
-    /// `None` — задачи нет: сценарий сам решает, какую ошибку вернуть.
+    /// `None` means there is no such task: the use case decides which error to return.
     async fn add(
         &self,
         task_id: TaskId,
@@ -101,7 +101,7 @@ pub trait SubtaskStore: Send + Sync {
     async fn delete(&self, id: SubtaskId) -> Result<bool, RepositoryError>;
 }
 
-/// Теги: связи по проекту для доски, полный список для подсказок, замена набора у задачи.
+/// Tags: project links for the board, the full list for suggestions, set swap per task.
 #[async_trait]
 pub trait TagStore: Send + Sync {
     async fn list_by_project(&self, project_id: ProjectId)
@@ -109,7 +109,7 @@ pub trait TagStore: Send + Sync {
 
     async fn list_all(&self) -> Result<Vec<Tag>, RepositoryError>;
 
-    /// `None` — задачи нет; пустой список допустим и означает «теги сняты».
+    /// `None` means there is no such task; an empty list is valid and means "tags cleared".
     async fn replace(
         &self,
         task_id: TaskId,
@@ -117,7 +117,7 @@ pub trait TagStore: Send + Sync {
     ) -> Result<Option<Vec<Tag>>, RepositoryError>;
 }
 
-/// Комментарии: лента по проекту для счётчиков и точечные операции.
+/// Comments: the project feed for counters plus targeted operations.
 #[async_trait]
 pub trait CommentStore: Send + Sync {
     async fn list_by_project(&self, project_id: ProjectId)
@@ -140,7 +140,7 @@ pub trait CommentStore: Send + Sync {
     async fn delete(&self, id: CommentId) -> Result<bool, RepositoryError>;
 }
 
-/// Вложения: метаданные по проекту, байты только по запросу одного файла.
+/// Attachments: metadata per project, bytes only when one file is requested.
 #[async_trait]
 pub trait AttachmentStore: Send + Sync {
     async fn list_by_project(
@@ -167,7 +167,7 @@ pub trait AttachmentStore: Send + Sync {
     async fn delete(&self, id: AttachmentId) -> Result<bool, RepositoryError>;
 }
 
-/// Учётные записи: поиск по логину, создание, смена пароля.
+/// Accounts: lookup by login, creation, password change.
 #[async_trait]
 pub trait UserStore: Send + Sync {
     async fn find_by_username(&self, username: &Username) -> Result<Option<User>, RepositoryError>;
@@ -190,7 +190,7 @@ pub trait UserStore: Send + Sync {
     async fn list(&self) -> Result<Vec<User>, RepositoryError>;
 }
 
-/// Сессия в хранилище: наружу отдаётся только хеш токена, сам токен живёт в cookie.
+/// A stored session: only the token hash goes out, the token itself lives in a cookie.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StoredSession {
     pub id_hash: String,
@@ -200,7 +200,7 @@ pub struct StoredSession {
     pub last_seen_at: Timestamp,
 }
 
-/// Серверные сессии: создание, поиск по хешу, продление отметки, отзыв.
+/// Server sessions: create, look up by hash, refresh the timestamp, revoke.
 #[async_trait]
 pub trait SessionStore: Send + Sync {
     async fn create(&self, session: &StoredSession) -> Result<(), RepositoryError>;
@@ -214,16 +214,16 @@ pub trait SessionStore: Send + Sync {
     async fn delete_for_user(&self, user_id: UserId) -> Result<(), RepositoryError>;
 }
 
-/// Хеширование паролей: конкретный алгоритм — деталь инфраструктуры.
+/// Password hashing: the concrete algorithm is an infrastructure detail.
 pub trait PasswordHasher: Send + Sync {
     fn hash(&self, password: &str) -> Result<PasswordHash, RepositoryError>;
 
     fn verify(&self, password: &str, hash: &PasswordHash) -> bool;
 }
 
-/// Выпуск и хеширование токенов сессий: в БД попадает только хеш.
+/// Issuing and hashing session tokens: only the hash reaches the DB.
 pub trait SessionTokens: Send + Sync {
-    /// Возвращает пару (токен для cookie, хеш для БД).
+    /// Returns a pair (token for the cookie, hash for the DB).
     fn issue(&self) -> (String, String);
 
     fn hash(&self, token: &str) -> String;

@@ -78,7 +78,7 @@ pub async fn update(
     Ok(Json(ProjectDto::from(&project)))
 }
 
-/// Удаление проекта = архивирование: задачи не пропадают.
+/// Deleting a project means archiving it: the tasks do not disappear.
 pub async fn archive(
     State(state): State<AppState>,
     Path(id): Path<i64>,

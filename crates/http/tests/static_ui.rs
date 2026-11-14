@@ -1,4 +1,4 @@
-//! Статика SPA: один бинарь отдаёт оболочку, ассеты и JSON-404 для неизвестного API.
+//! SPA assets: one binary serves the shell, the assets and a JSON 404 for unknown API paths.
 
 mod support;
 

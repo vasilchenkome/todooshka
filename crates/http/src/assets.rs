@@ -1,6 +1,6 @@
-//! Статика SPA: во фронтенд-сборке файлы вшиты в бинарь, в debug-сборке читаются с диска.
+//! SPA assets: frontend builds embed them in the binary, debug builds read them from disk.
 //!
-//! Один бинарь отдаёт и API, и интерфейс: в контейнере нет отдельного nginx.
+//! One binary serves both the API and the UI: the container has no separate nginx.
 
 use axum::http::StatusCode;
 use axum::http::Uri;
@@ -9,12 +9,12 @@ use axum::response::{IntoResponse, Response};
 
 use rust_embed::Embed;
 
-/// Интерфейс собирается Vite в `frontend/dist`; в release-сборке файлы попадают в бинарь.
+/// Vite builds the UI into `frontend/dist`; a release build embeds the files in the binary.
 #[derive(Embed)]
 #[folder = "../../frontend/dist/"]
 struct Assets;
 
-/// Отдаёт файл из сборки интерфейса; неизвестный путь без расширения — это роут SPA.
+/// Serves a file from the UI build; an unknown path without an extension is an SPA route.
 pub async fn serve(uri: Uri) -> Response {
     let requested = uri.path().trim_start_matches('/');
     let requested = if requested.is_empty() {
@@ -31,7 +31,7 @@ pub async fn serve(uri: Uri) -> Response {
         return respond(requested, file);
     }
 
-    // Клиентские маршруты (/projects/1) отдают оболочку, страницу собирает React.
+    // Client routes (/projects/1) return the shell, and React renders the page.
     if !requested.contains('.')
         && let Some(index) = Assets::get("index.html")
     {

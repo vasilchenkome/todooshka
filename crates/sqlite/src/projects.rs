@@ -7,7 +7,7 @@ use todooshka_domain::{
 
 use crate::mapping::{corrupted, unavailable};
 
-/// SQLite-реализация порта проектов: SQL, маппинг строк, без бизнес-правил.
+/// SQLite implementation of the project port: SQL and row mapping, no business rules.
 pub struct SqliteProjects {
     pool: SqlitePool,
 }
@@ -18,7 +18,7 @@ impl SqliteProjects {
     }
 }
 
-/// Строка `projects` как она лежит в базе; доменный объект собирается только через неё.
+/// A `projects` row exactly as stored; the domain object is built only through it.
 #[derive(sqlx::FromRow)]
 struct ProjectRow {
     id: i64,
@@ -90,8 +90,8 @@ impl ProjectRepository for SqliteProjects {
         draft: ProjectDraft,
         now: Timestamp,
     ) -> Result<Project, RepositoryError> {
-        // Позиция считается в том же выражении, что и вставка: отдельный SELECT оставил бы
-        // окно, в котором другой запрос займёт тот же конец списка.
+        // The position is computed in the same statement as the insert: a separate SELECT would
+        // leave a window where another query grabs the same slot at the end of the list.
         let row: ProjectRow = sqlx::query_as(
             "INSERT INTO projects (name, description, color, position, archived, created_at, updated_at)
              VALUES (?1, ?2, ?3, (SELECT COALESCE(MAX(position), -1) + 1 FROM projects), 0, ?4, ?5)

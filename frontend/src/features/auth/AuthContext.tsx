@@ -13,7 +13,7 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-/** Сессия живёт в cookie, при старте приложения спрашиваем сервер, кто мы. */
+/** The session lives in a cookie; on startup we ask the server who we are. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

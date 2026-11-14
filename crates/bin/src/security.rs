@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use todooshka_app::{PasswordHasher, RepositoryError, SessionTokens};
 use todooshka_domain::PasswordHash;
 
-/// Argon2id с солью на каждый пароль: хеш самодостаточен для проверки.
+/// Argon2id with a salt per password: the hash is self-contained for verification.
 pub struct Argon2PasswordHasher;
 
 impl PasswordHasher for Argon2PasswordHasher {
@@ -30,7 +30,7 @@ impl PasswordHasher for Argon2PasswordHasher {
     }
 }
 
-/// Токен сессии — 32 случайных байта в hex; в БД уходит только SHA-256 от него.
+/// A session token is 32 random bytes in hex; only its SHA-256 reaches the DB.
 pub struct RandomSessionTokens;
 
 impl SessionTokens for RandomSessionTokens {

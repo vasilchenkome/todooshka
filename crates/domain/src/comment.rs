@@ -54,7 +54,7 @@ pub struct CommentSnapshot {
     pub updated_at: Timestamp,
 }
 
-/// Комментарий к задаче: текст и время, автор один и тот же пользователь.
+/// A task comment: text and time; the author is always the same user.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Comment {
     id: CommentId,

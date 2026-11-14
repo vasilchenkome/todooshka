@@ -16,7 +16,7 @@ export function areOrdered(left: Task, right: Task): number {
   return left.position - right.position || left.id - right.id;
 }
 
-/** Задачи по колонкам в порядке доски; исходный массив не меняется. */
+/** Tasks grouped by column in board order; the source array is left untouched. */
 export function groupByStatus(tasks: Task[]): BoardColumns {
   const columns: BoardColumns = { backlog: [], in_progress: [], done: [] };
   for (const task of tasks) {
@@ -28,15 +28,15 @@ export function groupByStatus(tasks: Task[]): BoardColumns {
   return columns;
 }
 
-/** Номер задачи внутри проекта: сквозной по id, как читается на доске. */
+/** Task number within the project: sequential by id, as read on the board. */
 export function projectNumbers(tasks: Task[]): Map<number, number> {
   const ordered = [...tasks].sort((left, right) => left.id - right.id);
   return new Map(ordered.map((task, index) => [task.id, index + 1]));
 }
 
 /**
- * Оптимистичный перенос: карточка встаёт на место до ответа сервера.
- * Позиции в целевой колонке перенумеровываются, чтобы порядок совпадал с серверным.
+ * Optimistic move: the card lands in place before the server responds.
+ * Positions in the target column are renumbered so the order matches the server.
  */
 export function applyOptimisticMove(
   tasks: Task[],
@@ -71,7 +71,7 @@ export function applyOptimisticMove(
     .concat([{ ...optimistic, position: positions.get(optimistic.id) ?? index + 1 }]);
 }
 
-/** Куда встанет карточка при броске на `overId`; `null` — мимо. */
+/** Where the card lands when dropped on `overId`; `null` means a miss. */
 export function resolveDrop(
   tasks: Task[],
   activeId: number,
@@ -90,7 +90,7 @@ export function resolveDrop(
   }
 
   if (overTask.status === tasks.find((task) => task.id === activeId)?.status) {
-    // Внутри колонки индекс считается по полному списку: так же работает arrayMove.
+    // Within a column the index is counted over the full list, the same way arrayMove works.
     const column = tasks.filter((task) => task.status === overTask.status).sort(areOrdered);
     return { status: overTask.status, index: column.findIndex((task) => task.id === overTask.id) };
   }
@@ -110,7 +110,7 @@ export type DueLabel = {
   tone: DueTone;
 };
 
-/** Дата срока в локальном календаре; строка считается календарной датой без времени. */
+/** Due date in the local calendar; the string is treated as a calendar date without time. */
 function parseDueDate(value: string): Date | null {
   const parts = value.split("-").map(Number);
   if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;
@@ -165,7 +165,7 @@ export function daysUntilDue(dueOn: string | null): number | null {
   return Math.round((date.getTime() - startOfToday().getTime()) / 86_400_000);
 }
 
-/** Клиентские фильтры доски: поиск по тексту, приоритет, срок и тег. */
+/** Client-side board filters: text search, priority, due date and tag. */
 export function filterTasks(
   tasks: Task[],
   filters: BoardFilters,

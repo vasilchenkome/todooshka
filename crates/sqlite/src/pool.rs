@@ -6,18 +6,18 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, S
 
 use crate::error::StorageError;
 
-/// Пул ограничен: один пользователь, лишние соединения только маскируют утечки.
+/// The pool is capped: a single user, and spare connections only hide leaks.
 const MAX_CONNECTIONS: u32 = 5;
 
-/// Сколько ждать свободного соединения из пула, прежде чем вернуть ошибку.
+/// How long to wait for a free pooled connection before returning an error.
 const ACQUIRE_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// Сколько SQLite ждёт снятия блокировки записи.
+/// How long SQLite waits for a write lock to be released.
 const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// Открывает пул с настройками, которые нужны приложению: WAL, внешние ключи, таймауты.
+/// Opens the pool with the settings the app needs: WAL, foreign keys, timeouts.
 pub async fn connect(database_url: &str) -> Result<SqlitePool, StorageError> {
-    // Схему проверяем сами: sqlx молча трактует чужой URL как имя файла.
+    // We check the scheme ourselves: sqlx silently treats a foreign URL as a file name.
     if !database_url.starts_with("sqlite:") {
         return Err(StorageError::InvalidUrl(database_url.to_owned()));
     }

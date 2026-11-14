@@ -2,10 +2,10 @@ use todooshka_domain::{
     AttachmentId, CommentId, DomainError, ProjectId, SubtaskId, TaskId, Username,
 };
 
-/// Как порт хранения сообщает о своих проблемах, не выдавая драйвер БД.
+/// How a storage port reports its own problems without exposing the DB driver.
 ///
-/// Тексты ошибок здесь — для логов и диагностики; пользователю HTTP-слой покажет
-/// обобщённое сообщение.
+/// Error texts here are for logs and diagnostics; the HTTP layer shows the user
+/// a generic message.
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum RepositoryError {
     #[error("хранилище недоступно: {0}")]
@@ -18,7 +18,7 @@ pub enum RepositoryError {
     Conflict(String),
 }
 
-/// Ошибки сценариев: доменные правила, отсутствие сущности, отказ хранилища.
+/// Use-case errors: domain rules, a missing entity, a storage refusal.
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum ApplicationError {
     #[error(transparent)]

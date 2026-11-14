@@ -163,7 +163,7 @@ impl PasswordHasher for FakeHasher {
     }
 }
 
-/// Токены детерминированы: проверяем, что в БД уходит только хеш.
+/// Tokens are deterministic: we check that only the hash reaches the DB.
 struct FakeTokens(AtomicI64);
 
 impl SessionTokens for FakeTokens {

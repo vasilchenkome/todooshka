@@ -1,4 +1,4 @@
-//! Composition root: конфигурация, сборка зависимостей, CLI и запуск сервера.
+//! Composition root: configuration, wiring, the CLI and server startup.
 
 mod cli;
 mod clock;
@@ -70,7 +70,7 @@ async fn backup_database(target: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Проверка для контейнера: читает readiness-эндпоинт по тому же адресу, что и сервер.
+/// Container health check: reads the readiness endpoint on the same address as the server.
 fn healthcheck() -> Result<(), Box<dyn Error>> {
     let bind = config::bind_addr()?;
     let port = bind.port();
@@ -244,7 +244,7 @@ async fn list_users() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Пароль вводится скрыто и дважды; для скриптов и контейнера — одна строка из stdin.
+/// The password is entered hidden and twice; for scripts and containers, one line from stdin.
 fn read_password(from_stdin: bool) -> Result<String, Box<dyn Error>> {
     if from_stdin {
         let mut line = String::new();

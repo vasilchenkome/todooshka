@@ -56,7 +56,7 @@ pub struct SubtaskSnapshot {
     pub updated_at: Timestamp,
 }
 
-/// Пункт чек-листа задачи: короткая строка, отметка и порядок внутри задачи.
+/// A checklist item: a short line, a tick and its order inside the task.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Subtask {
     id: SubtaskId,

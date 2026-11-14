@@ -1,7 +1,7 @@
-//! Сценарии приложения (use cases) и порты, которые они требуют от инфраструктуры.
+//! Application use cases and the ports they require from the infrastructure.
 //!
-//! Один сценарий — одно действие пользователя. Крейт зависит только от домена:
-//! конкретная БД, HTTP и чтение конфигурации живут снаружи.
+//! One use case, one user action. The crate depends only on the domain:
+//! a concrete DB, HTTP and config reading all live outside.
 
 mod attachments;
 mod auth;

@@ -1,6 +1,6 @@
-//! HTTP-адаптер: роутер, DTO, middleware, статика SPA.
+//! HTTP adapter: router, DTOs, middleware and SPA assets.
 //!
-//! Handlers только переводят запрос в вызов сценария и обратно; бизнес-правил здесь нет.
+//! Handlers only translate a request into a use-case call and back; no business rules here.
 
 pub mod assets;
 mod attachments;
@@ -30,13 +30,13 @@ use tower_http::timeout::TimeoutLayer;
 
 use crate::error::ApiError;
 
-/// Верхняя граница на запрос: зависший клиент не держит соединение бесконечно.
+/// Per-request upper bound: a stalled client cannot hold a connection forever.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Собирает роутер приложения.
+/// Builds the application router.
 ///
-/// Публично доступны только health, вход и статика; остальное закрыто сессией, которую
-/// проверяет middleware и кладёт пользователя в расширения запроса.
+/// Only health, sign-in and static assets are public; everything else needs a session
+/// that the middleware validates and puts into the request extensions.
 pub fn router(state: AppState) -> Router {
     let protected = Router::new()
         .route("/auth/logout", post(auth::logout))

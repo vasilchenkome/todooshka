@@ -3,7 +3,7 @@ use crate::planning::Planning;
 use crate::project::ProjectId;
 use crate::time::Timestamp;
 
-/// Границы заголовка и описания задачи.
+/// Bounds for the task title and description.
 pub const MAX_TASK_TITLE_CHARS: usize = 200;
 pub const MAX_TASK_DESCRIPTION_CHARS: usize = 2000;
 
@@ -26,7 +26,7 @@ impl std::fmt::Display for TaskId {
     }
 }
 
-/// Колонки доски: семантика статусов, без подписей и цветов интерфейса.
+/// Board columns: status semantics only, no UI labels or colours.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TaskStatus {
     Backlog,
@@ -41,7 +41,7 @@ impl TaskStatus {
         matches!(self, Self::Done)
     }
 
-    /// Код статуса в БД и API: одно место, где эти строки вообще есть.
+    /// The status code used in the DB and API: the only place these strings exist.
     pub const fn as_code(self) -> &'static str {
         match self {
             Self::Backlog => "backlog",
@@ -59,7 +59,7 @@ impl TaskStatus {
         }
     }
 
-    /// Порядок колонок на доске.
+    /// Column order on the board.
     pub const fn order(self) -> usize {
         match self {
             Self::Backlog => 0,
@@ -69,7 +69,7 @@ impl TaskStatus {
     }
 }
 
-/// Заголовок задачи: обрезан по краям и не пустой.
+/// Task title: trimmed and non-empty.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TaskTitle(String);
 
@@ -92,7 +92,7 @@ impl TaskTitle {
     }
 }
 
-/// Проверенный черновик новой задачи.
+/// A validated draft of a new task.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TaskDraft {
     title: TaskTitle,
@@ -116,7 +116,7 @@ impl TaskDraft {
     }
 }
 
-/// Состояние задачи из хранилища: только для восстановления сущности.
+/// Task state as read from storage: only for restoring the entity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TaskSnapshot {
     pub id: TaskId,
@@ -131,7 +131,7 @@ pub struct TaskSnapshot {
     pub planning: Planning,
 }
 
-/// Задача на доске: принадлежит проекту, живёт в колонке с дробной позицией.
+/// A task on the board: belongs to a project, sits in a column at a fractional position.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Task {
     id: TaskId,
@@ -171,7 +171,7 @@ impl Task {
         })
     }
 
-    /// Восстанавливает задачу из БД; расхождения статуса и `completed_at` — порча данных.
+    /// Restores a task from the DB; a status/`completed_at` mismatch means corrupted data.
     pub fn restore(snapshot: TaskSnapshot) -> Result<Self, DomainError> {
         ensure_position(snapshot.position)?;
 
@@ -210,10 +210,10 @@ impl Task {
         self.updated_at = now;
     }
 
-    /// Перенос между колонками и внутри колонки одним действием.
+    /// A move between columns and within a column in one action.
     ///
-    /// В `Done` выставляется `completed_at`, при выходе — сбрасывается; повторный перенос
-    /// в `Done` сохраняет исходный момент завершения.
+    /// Entering `Done` sets `completed_at`, leaving it clears the value; moving into
+    /// `Done` again keeps the original completion moment.
     pub fn move_to(
         &mut self,
         status: TaskStatus,
@@ -236,7 +236,7 @@ impl Task {
         Ok(())
     }
 
-    /// Перенос внутри колонки — только позиция, без смены статуса и меток.
+    /// A move within a column changes only the position, not the status or timestamps.
     pub fn place_at(&mut self, position: f64) -> Result<(), DomainError> {
         ensure_position(position)?;
         self.position = position;

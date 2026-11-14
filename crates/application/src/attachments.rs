@@ -8,7 +8,7 @@ use todooshka_domain::{
 use crate::error::ApplicationError;
 use crate::ports::{AttachmentStore, Clock};
 
-/// Файлы задачи: лимиты проверяются до записи, тип выводится из имени.
+/// Task files: limits are checked before writing, the type comes from the name.
 pub struct AttachmentService {
     attachments: Arc<dyn AttachmentStore>,
     clock: Arc<dyn Clock>,

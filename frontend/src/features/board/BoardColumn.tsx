@@ -64,7 +64,7 @@ export function BoardColumn({
       setDraft("");
       setAdding(false);
     } catch {
-      // Ошибку показывает страница доски, форма остаётся открытой для повтора.
+      // The board page shows the error; the form stays open so it can be retried.
     }
   }
 

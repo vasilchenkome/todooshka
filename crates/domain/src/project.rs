@@ -1,11 +1,11 @@
 use crate::error::DomainError;
 use crate::time::Timestamp;
 
-/// Границы имени и описания: длиннее уже не читается на доске, короче — не говорим ничего.
+/// Name and description bounds: longer stops reading on the board, shorter says nothing.
 pub const MAX_PROJECT_NAME_CHARS: usize = 80;
 pub const MAX_PROJECT_DESCRIPTION_CHARS: usize = 2000;
 
-/// Цвет по умолчанию для проектов без выбранного цвета.
+/// Default colour for projects that have none.
 pub const DEFAULT_PROJECT_COLOR: &str = "#5f6b76";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -27,7 +27,7 @@ impl std::fmt::Display for ProjectId {
     }
 }
 
-/// Имя проекта уже обрезано по краям и проверено; пустым его сделать нельзя.
+/// The project name is already trimmed and validated; it can never be empty.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProjectName(String);
 
@@ -50,7 +50,7 @@ impl ProjectName {
     }
 }
 
-/// Цвет строго в `#RRGGBB` и в нижнем регистре, чтобы сравнение было предсказуемым.
+/// Colour strictly as `#RRGGBB` in lowercase, so comparisons stay predictable.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProjectColor(String);
 
@@ -77,7 +77,7 @@ impl ProjectColor {
     }
 }
 
-/// Проверенный черновик нового проекта: всё, что известно до появления id.
+/// A validated draft of a new project: everything known before an id exists.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProjectDraft {
     name: ProjectName,
@@ -114,7 +114,7 @@ impl ProjectDraft {
     }
 }
 
-/// Состояние проекта из хранилища: используется только для восстановления сущности.
+/// Project state as read from storage: used only to restore the entity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProjectSnapshot {
     pub id: ProjectId,
@@ -127,7 +127,7 @@ pub struct ProjectSnapshot {
     pub updated_at: Timestamp,
 }
 
-/// Проект на доске: имя, цвет, позиция в списке и архивный флаг.
+/// A project on the board: name, colour, position in the list and the archived flag.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
     id: ProjectId,
@@ -141,7 +141,7 @@ pub struct Project {
 }
 
 impl Project {
-    /// Собирает сущность из проверенного черновика; id выдаёт хранилище.
+    /// Builds the entity from a validated draft; the storage assigns the id.
     pub fn create(id: ProjectId, draft: ProjectDraft, position: i32, now: Timestamp) -> Self {
         Self {
             id,
@@ -155,8 +155,8 @@ impl Project {
         }
     }
 
-    /// Восстанавливает проект из БД. Ошибка здесь означает испорченные данные, а не
-    /// действие пользователя, поэтому описание проверяется повторно.
+    /// Restores a project from the DB. An error here means corrupted data rather than
+    /// a user action, so the description is validated again.
     pub fn restore(snapshot: ProjectSnapshot) -> Result<Self, DomainError> {
         Ok(Self {
             id: snapshot.id,

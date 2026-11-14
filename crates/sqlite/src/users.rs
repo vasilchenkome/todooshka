@@ -5,7 +5,7 @@ use todooshka_domain::{PasswordHash, Timestamp, User, UserId, Username};
 
 use crate::mapping::{corrupted, unavailable};
 
-/// SQLite-реализация учётных записей. Пароли приходят уже хешированными.
+/// SQLite account implementation. Passwords arrive already hashed.
 pub struct SqliteUsers {
     pool: SqlitePool,
 }

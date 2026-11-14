@@ -88,7 +88,7 @@ pub async fn delete(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Коды статусов — часть контракта API; всё остальное считаем ошибкой формата.
+/// Status codes are part of the API contract; anything else is a format error.
 fn parse_status(code: &str) -> Result<TaskStatus, ApiError> {
     TaskStatus::from_code(code).ok_or_else(|| {
         ApiError::validation_localized(

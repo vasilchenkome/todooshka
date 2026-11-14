@@ -5,7 +5,7 @@ use todooshka_domain::{Timestamp, UserId};
 
 use crate::mapping::unavailable;
 
-/// SQLite-реализация сессий: `id` — хеш токена, сам токен здесь не хранится.
+/// SQLite session implementation: `id` is the token hash, the token itself is not stored.
 pub struct SqliteSessions {
     pool: SqlitePool,
 }

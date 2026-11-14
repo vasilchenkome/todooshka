@@ -5,7 +5,7 @@ use todooshka_domain::{Project, ProjectColor, ProjectDraft, ProjectId, ProjectNa
 use crate::error::ApplicationError;
 use crate::ports::{Clock, ProjectRepository};
 
-/// Создать проект: имя и цвет проверяются до обращения к хранилищу.
+/// Create a project: name and colour are validated before touching storage.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CreateProject {
     pub name: String,
@@ -13,7 +13,7 @@ pub struct CreateProject {
     pub color: Option<String>,
 }
 
-/// Частичное изменение проекта: заданы только те поля, которые меняются.
+/// A partial project update: only the fields that change are provided.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UpdateProject {
     pub id: ProjectId,
@@ -23,7 +23,7 @@ pub struct UpdateProject {
     pub archived: Option<bool>,
 }
 
-/// Сценарии проектов доски. Транзакций здесь нет: каждая операция — один факт хранения.
+/// Board project use cases. No transactions here: each operation is one storage fact.
 pub struct ProjectService {
     projects: Arc<dyn ProjectRepository>,
     clock: Arc<dyn Clock>,
@@ -49,11 +49,11 @@ impl ProjectService {
         Ok(projects)
     }
 
-    /// Применяет изменения одним сохранением.
+    /// Applies the changes with a single save.
     ///
-    /// Все значения проверяются до первой мутации, поэтому ошибка валидации не оставляет
-    /// проект наполовину изменённым. Совпадающие значения не считаются изменением и не
-    /// сдвигают `updated_at`.
+    /// Every value is validated before the first mutation, so a validation error never
+    /// leaves the project half-changed. Unchanged values do not count as an edit and
+    /// do not bump `updated_at`.
     pub async fn update(&self, command: UpdateProject) -> Result<Project, ApplicationError> {
         let name = command
             .name
@@ -109,7 +109,7 @@ impl ProjectService {
         Ok(project)
     }
 
-    /// Общая проверка существования: одинаковое «не найдено» для всех правок.
+    /// Shared existence check: the same "not found" for every edit.
     async fn require(&self, id: ProjectId) -> Result<Project, ApplicationError> {
         self.projects
             .get(id)

@@ -5,7 +5,7 @@ use todooshka_domain::{Comment, CommentBody, CommentId, ProjectId, TaskId};
 use crate::error::ApplicationError;
 use crate::ports::{Clock, CommentStore};
 
-/// Лента комментариев задачи: добавить, отредактировать, удалить.
+/// A task's comment feed: add, edit, delete.
 pub struct CommentService {
     comments: Arc<dyn CommentStore>,
     clock: Arc<dyn Clock>,

@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use todooshka_app::Clock;
 use todooshka_domain::Timestamp;
 
-/// Системные часы: единственное место, где сценарии узнают реальное время.
+/// The system clock: the only place where use cases learn the real time.
 pub struct SystemClock;
 
 impl Clock for SystemClock {

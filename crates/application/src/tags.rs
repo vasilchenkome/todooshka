@@ -5,7 +5,7 @@ use todooshka_domain::{ProjectId, Tag, TagName, TaskId, TaskTag};
 use crate::error::ApplicationError;
 use crate::ports::TagStore;
 
-/// Теги задачи: свободные метки с регистронезависимой уникальностью.
+/// Task tags: free-form labels with case-insensitive uniqueness.
 pub struct TagService {
     tags: Arc<dyn TagStore>,
 }

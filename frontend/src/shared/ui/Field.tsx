@@ -4,7 +4,7 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: ReactNode;
 };
 
-/** Поле формы: подпись сверху, линия снизу, акцент при фокусе. */
+/** Form field: label above, underline below, accent on focus. */
 export function Field({ label, ...input }: FieldProps) {
   return (
     <label className="block">

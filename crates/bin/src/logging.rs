@@ -1,6 +1,6 @@
 use tracing_subscriber::EnvFilter;
 
-/// Инициализирует логи: уровень из `RUST_LOG`, формат — из `LOG_FORMAT` (`json` для контейнера).
+/// Initialises logging: level from `RUST_LOG`, format from `LOG_FORMAT` (`json` in containers).
 pub fn init() {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let json = std::env::var("LOG_FORMAT")

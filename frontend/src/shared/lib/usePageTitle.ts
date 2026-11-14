@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-/** Заголовок вкладки: у доски — имя проекта, у служебных экранов — своё. */
+/** Tab title: the project name on the board, a screen-specific one elsewhere. */
 export function usePageTitle(title: string) {
   useEffect(() => {
     document.title = title;

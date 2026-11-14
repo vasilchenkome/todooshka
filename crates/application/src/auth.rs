@@ -5,10 +5,10 @@ use todooshka_domain::{Timestamp, User, UserId, Username, validate_password};
 use crate::error::ApplicationError;
 use crate::ports::{Clock, PasswordHasher, SessionStore, SessionTokens, StoredSession, UserStore};
 
-/// Сессия живёт 30 дней; активность продлевает отметку, но не срок.
+/// A session lives 30 days; activity refreshes the timestamp, not the expiry.
 pub const SESSION_TTL_SECONDS: i64 = 30 * 24 * 60 * 60;
 
-/// Отметку последней активности обновляем не чаще раза в час, чтобы не писать на каждый запрос.
+/// We refresh last-activity at most once an hour to avoid a write on every request.
 pub const SESSION_TOUCH_SECONDS: i64 = 60 * 60;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,7 +29,7 @@ pub struct ChangePassword {
     pub password: String,
 }
 
-/// Выпущенная сессия: токен уходит в cookie, в БД лежит только его хеш.
+/// An issued session: the token goes into a cookie, only its hash is stored in the DB.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IssuedSession {
     pub token: String,
@@ -37,14 +37,14 @@ pub struct IssuedSession {
     pub user: User,
 }
 
-/// Кто пришёл с валидной сессией: этого достаточно middleware и `/api/auth/me`.
+/// Who arrived with a valid session: enough for the middleware and `/api/auth/me`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthenticatedUser {
     pub id: UserId,
     pub username: String,
 }
 
-/// Сценарии входа и учётных записей.
+/// Sign-in and account use cases.
 pub struct AuthService {
     users: Arc<dyn UserStore>,
     sessions: Arc<dyn SessionStore>,
@@ -81,7 +81,7 @@ impl AuthService {
             .await
         {
             Ok(user) => Ok(user),
-            // Уникальный индекс в БД — единственная надёжная проверка занятости логина.
+            // The unique index in the DB is the only reliable check that a login is taken.
             Err(crate::RepositoryError::Conflict(_)) => {
                 Err(ApplicationError::UsernameTaken(username))
             }
@@ -108,7 +108,7 @@ impl AuthService {
             return Err(ApplicationError::UserNotFound(username));
         }
 
-        // Смена пароля разлогинивает все устройства: старые токены больше не действуют.
+        // Changing the password signs out every device: the old tokens stop working.
         self.sessions.delete_for_user(user.id()).await?;
         Ok(())
     }
@@ -117,8 +117,8 @@ impl AuthService {
         Ok(self.users.list().await?)
     }
 
-    /// Одинаковая ошибка на неизвестный логин и неверный пароль: не подсказываем,
-    /// какие учётные записи существуют.
+    /// The same error for an unknown login and a wrong password: we do not reveal
+    /// which accounts exist.
     pub async fn login(&self, command: Login) -> Result<IssuedSession, ApplicationError> {
         let username =
             Username::parse(&command.username).map_err(|_| ApplicationError::InvalidCredentials)?;
@@ -150,7 +150,7 @@ impl AuthService {
         })
     }
 
-    /// Проверяет токен из cookie. Просроченную сессию удаляет, активность отмечает не чаще часа.
+    /// Validates the cookie token. Drops an expired session; refreshes activity at most hourly.
     pub async fn authenticate(
         &self,
         token: &str,

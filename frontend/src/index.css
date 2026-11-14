@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Onest и Golos Text лежат в public/fonts: внешних CDN нет, работает в закрытой сети. */
+/* Onest and Golos Text live in public/fonts: no external CDNs, works on an isolated network. */
 @font-face {
   font-family: "Golos Text";
   font-style: normal;

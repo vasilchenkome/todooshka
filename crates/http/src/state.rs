@@ -8,13 +8,13 @@ use todooshka_app::{
 
 use crate::auth::LoginLimiter;
 
-/// Проверка готовности: адаптер хранилища отвечает, можно ли обслуживать запросы.
+/// Readiness check: the storage adapter reports whether it can serve requests.
 #[async_trait]
 pub trait ReadinessProbe: Send + Sync {
     async fn check(&self) -> bool;
 }
 
-/// Всё, что нужно HTTP-слою: сценарии и настройки транспорта.
+/// Everything the HTTP layer needs: use cases and transport settings.
 #[derive(Clone)]
 pub struct AppState {
     pub projects: Arc<ProjectService>,
@@ -25,7 +25,7 @@ pub struct AppState {
     pub attachments: Arc<AttachmentService>,
     pub auth: Arc<AuthService>,
     pub login_limiter: LoginLimiter,
-    /// Флаг `Secure` у cookie: включается только когда приложение за HTTPS.
+    /// The cookie `Secure` flag: enabled only when the app is behind HTTPS.
     pub cookie_secure: bool,
     pub readiness: Arc<dyn ReadinessProbe>,
 }
