@@ -1,4 +1,6 @@
-use todooshka_domain::{DomainError, ProjectId, SubtaskId, TaskId, Username};
+use todooshka_domain::{
+    AttachmentId, CommentId, DomainError, ProjectId, SubtaskId, TaskId, Username,
+};
 
 /// Как порт хранения сообщает о своих проблемах, не выдавая драйвер БД.
 ///
@@ -33,6 +35,15 @@ pub enum ApplicationError {
 
     #[error("пункт чек-листа {0} не найден")]
     SubtaskNotFound(SubtaskId),
+
+    #[error("комментарий {0} не найден")]
+    CommentNotFound(CommentId),
+
+    #[error("вложение {0} не найдено")]
+    AttachmentNotFound(AttachmentId),
+
+    #[error("к задаче уже прикреплено 10 файлов")]
+    AttachmentsLimitReached,
 
     #[error("неверный логин или пароль")]
     InvalidCredentials,

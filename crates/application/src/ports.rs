@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use todooshka_domain::{
-    PasswordHash, Project, ProjectDraft, ProjectId, Subtask, SubtaskId, Task, TaskDraft, TaskId,
-    TaskStatus, Timestamp, User, UserId, Username,
+    AttachmentId, AttachmentMeta, Comment, CommentId, PasswordHash, Project, ProjectDraft,
+    ProjectId, Subtask, SubtaskId, Tag, TagName, Task, TaskDraft, TaskId, TaskStatus, TaskTag,
+    Timestamp, User, UserId, Username,
 };
 
 use crate::error::RepositoryError;
@@ -98,6 +99,72 @@ pub trait SubtaskStore: Send + Sync {
     ) -> Result<Option<Subtask>, RepositoryError>;
 
     async fn delete(&self, id: SubtaskId) -> Result<bool, RepositoryError>;
+}
+
+/// Теги: связи по проекту для доски, полный список для подсказок, замена набора у задачи.
+#[async_trait]
+pub trait TagStore: Send + Sync {
+    async fn list_by_project(&self, project_id: ProjectId)
+    -> Result<Vec<TaskTag>, RepositoryError>;
+
+    async fn list_all(&self) -> Result<Vec<Tag>, RepositoryError>;
+
+    /// `None` — задачи нет; пустой список допустим и означает «теги сняты».
+    async fn replace(
+        &self,
+        task_id: TaskId,
+        names: &[TagName],
+    ) -> Result<Option<Vec<Tag>>, RepositoryError>;
+}
+
+/// Комментарии: лента по проекту для счётчиков и точечные операции.
+#[async_trait]
+pub trait CommentStore: Send + Sync {
+    async fn list_by_project(&self, project_id: ProjectId)
+    -> Result<Vec<Comment>, RepositoryError>;
+
+    async fn add(
+        &self,
+        task_id: TaskId,
+        body: &str,
+        now: Timestamp,
+    ) -> Result<Option<Comment>, RepositoryError>;
+
+    async fn edit(
+        &self,
+        id: CommentId,
+        body: &str,
+        now: Timestamp,
+    ) -> Result<Option<Comment>, RepositoryError>;
+
+    async fn delete(&self, id: CommentId) -> Result<bool, RepositoryError>;
+}
+
+/// Вложения: метаданные по проекту, байты только по запросу одного файла.
+#[async_trait]
+pub trait AttachmentStore: Send + Sync {
+    async fn list_by_project(
+        &self,
+        project_id: ProjectId,
+    ) -> Result<Vec<AttachmentMeta>, RepositoryError>;
+
+    async fn count_for_task(&self, task_id: TaskId) -> Result<i64, RepositoryError>;
+
+    async fn add(
+        &self,
+        task_id: TaskId,
+        filename: &str,
+        content_type: &str,
+        data: &[u8],
+        now: Timestamp,
+    ) -> Result<Option<AttachmentMeta>, RepositoryError>;
+
+    async fn get(
+        &self,
+        id: AttachmentId,
+    ) -> Result<Option<(AttachmentMeta, Vec<u8>)>, RepositoryError>;
+
+    async fn delete(&self, id: AttachmentId) -> Result<bool, RepositoryError>;
 }
 
 /// Учётные записи: поиск по логину, создание, смена пароля.

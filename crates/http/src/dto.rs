@@ -145,6 +145,91 @@ impl From<&todooshka_domain::Subtask> for SubtaskDto {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct TagDto {
+    pub id: i64,
+    pub name: String,
+}
+
+impl From<&todooshka_domain::Tag> for TagDto {
+    fn from(tag: &todooshka_domain::Tag) -> Self {
+        Self {
+            id: tag.id().as_raw(),
+            name: tag.name().as_str().to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct TaskTagDto {
+    pub task_id: i64,
+    pub name: String,
+}
+
+impl From<&todooshka_domain::TaskTag> for TaskTagDto {
+    fn from(link: &todooshka_domain::TaskTag) -> Self {
+        Self {
+            task_id: link.task_id.as_raw(),
+            name: link.name.as_str().to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReplaceTagsRequest {
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CommentDto {
+    pub id: i64,
+    pub task_id: i64,
+    pub body: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+impl From<&todooshka_domain::Comment> for CommentDto {
+    fn from(comment: &todooshka_domain::Comment) -> Self {
+        Self {
+            id: comment.id().as_raw(),
+            task_id: comment.task_id().as_raw(),
+            body: comment.body().as_str().to_owned(),
+            created_at: comment.created_at().as_unix_seconds(),
+            updated_at: comment.updated_at().as_unix_seconds(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct AttachmentDto {
+    pub id: i64,
+    pub task_id: i64,
+    pub filename: String,
+    pub content_type: String,
+    pub size: i64,
+    pub created_at: i64,
+}
+
+impl From<&todooshka_domain::AttachmentMeta> for AttachmentDto {
+    fn from(meta: &todooshka_domain::AttachmentMeta) -> Self {
+        Self {
+            id: meta.id.as_raw(),
+            task_id: meta.task_id.as_raw(),
+            filename: meta.filename.as_str().to_owned(),
+            content_type: meta.content_type.clone(),
+            size: meta.size,
+            created_at: meta.created_at.as_unix_seconds(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CommentRequest {
+    pub body: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateSubtaskRequest {
     pub title: String,

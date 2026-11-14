@@ -12,6 +12,10 @@ type BoardColumnProps = {
   tasks: Task[];
   numbers: Map<number, number>;
   subtasks: Map<number, { done: number; total: number }>;
+  tags: Map<number, string[]>;
+  comments: Map<number, number>;
+  attachments: Map<number, number>;
+  filtered?: boolean;
   accent?: boolean;
   activeOnMobile: boolean;
   creating: boolean;
@@ -27,6 +31,10 @@ export function BoardColumn({
   tasks,
   numbers,
   subtasks,
+  tags,
+  comments,
+  attachments,
+  filtered = false,
   accent = false,
   activeOnMobile,
   creating,
@@ -83,7 +91,9 @@ export function BoardColumn({
 
       <SortableContext items={visible.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         {tasks.length === 0 && (
-          <p className="mx-4 mt-4 text-[13px] text-steel">пусто — добавь задачу или перетащи сюда</p>
+          <p className="mx-4 mt-4 text-[13px] text-steel">
+            {filtered ? "нет подходящих задач" : "пусто — добавь задачу или перетащи сюда"}
+          </p>
         )}
         <ul className="mt-0 flex-1">
           {visible.map((task) => (
@@ -92,6 +102,9 @@ export function BoardColumn({
               task={task}
               number={numbers.get(task.id) ?? task.id}
               subtasks={subtasks.get(task.id)}
+              tags={tags.get(task.id)}
+              comments={comments.get(task.id) ?? 0}
+              attachments={attachments.get(task.id) ?? 0}
               onOpen={onOpenTask}
             />
           ))}

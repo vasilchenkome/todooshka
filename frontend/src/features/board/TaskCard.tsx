@@ -2,13 +2,16 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { Task } from "../../api/types";
-import { PRIORITY_LABELS, dueLabel } from "./boardModel";
+import { PRIORITY_LABELS, dueLabel, pluralRu } from "./boardModel";
 
 type TaskCardProps = {
   task: Task;
   number: number;
   onOpen: (task: Task) => void;
   subtasks?: { done: number; total: number };
+  tags?: string[];
+  comments?: number;
+  attachments?: number;
 };
 
 const PRIORITY_DOT: Record<Task["priority"], string> = {
@@ -26,7 +29,15 @@ const PRIORITY_TEXT: Record<Task["priority"], string> = {
 };
 
 /** Карточка задачи: строка, а не «облако»; номер и дата — табличными цифрами. */
-export function TaskCard({ task, number, onOpen, subtasks }: TaskCardProps) {
+export function TaskCard({
+  task,
+  number,
+  onOpen,
+  subtasks,
+  tags,
+  comments,
+  attachments,
+}: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -75,6 +86,16 @@ export function TaskCard({ task, number, onOpen, subtasks }: TaskCardProps) {
               чек-лист {subtasks.done}/{subtasks.total}
             </span>
           )}
+          {attachments !== undefined && attachments > 0 && (
+            <span className="whitespace-nowrap">
+              {pluralRu(attachments, "файл", "файла", "файлов")}
+            </span>
+          )}
+          {comments !== undefined && comments > 0 && (
+            <span className="whitespace-nowrap">
+              {pluralRu(comments, "комментарий", "комментария", "комментариев")}
+            </span>
+          )}
           {task.priority !== "normal" && (
             <span
               className={`ml-auto flex items-center gap-1.5 whitespace-nowrap ${PRIORITY_TEXT[task.priority]}`}
@@ -84,6 +105,14 @@ export function TaskCard({ task, number, onOpen, subtasks }: TaskCardProps) {
             </span>
           )}
         </p>
+        {tags && tags.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-x-2 text-[11px] text-steel">
+            {tags.slice(0, 2).map((tag) => (
+              <span key={tag}>#{tag}</span>
+            ))}
+            {tags.length > 2 && <span>+{tags.length - 2}</span>}
+          </div>
+        )}
       </div>
     </li>
   );

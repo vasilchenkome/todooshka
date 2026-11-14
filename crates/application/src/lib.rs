@@ -3,22 +3,29 @@
 //! Один сценарий — одно действие пользователя. Крейт зависит только от домена:
 //! конкретная БД, HTTP и чтение конфигурации живут снаружи.
 
+mod attachments;
 mod auth;
+mod comments;
 mod error;
 mod ports;
 mod projects;
 mod subtasks;
+mod tags;
 mod tasks;
 
+pub use attachments::AttachmentService;
 pub use auth::{
     AuthService, AuthenticatedUser, ChangePassword, CreateUser, IssuedSession, Login,
     SESSION_TOUCH_SECONDS, SESSION_TTL_SECONDS,
 };
+pub use comments::CommentService;
 pub use error::{ApplicationError, RepositoryError};
 pub use ports::{
-    Clock, PasswordHasher, ProjectRepository, ProjectTaskCount, SessionStore, SessionTokens,
-    StoredSession, SubtaskStore, TaskStore, TaskTransaction, UserStore,
+    AttachmentStore, Clock, CommentStore, PasswordHasher, ProjectRepository, ProjectTaskCount,
+    SessionStore, SessionTokens, StoredSession, SubtaskStore, TagStore, TaskStore, TaskTransaction,
+    UserStore,
 };
 pub use projects::{CreateProject, ProjectService, UpdateProject};
 pub use subtasks::SubtaskService;
+pub use tags::TagService;
 pub use tasks::{AddTask, EditTask, MoveTask, TaskService};

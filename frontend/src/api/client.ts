@@ -1,20 +1,30 @@
+import { z } from "zod";
+
 import {
   errorBodySchema,
   loginResponseSchema,
   projectListSchema,
   projectSchema,
+  attachmentSchema,
+  commentSchema,
   subtaskListSchema,
   subtaskSchema,
+  tagSchema,
   taskListSchema,
   taskSchema,
+  taskTagSchema,
   userSchema,
   type NewTask,
   type Project,
   type ProjectInput,
   type ProjectPatch,
+  type Attachment,
+  type Comment,
   type Subtask,
+  type Tag,
   type Task,
   type TaskPatch,
+  type TaskTag,
   type TaskStatus,
   type User,
 } from "./types";
@@ -142,4 +152,59 @@ export const api = {
 
   deleteSubtask: (id: number): Promise<void> =>
     request(`/api/subtasks/${id}`, { method: "DELETE" }, () => undefined),
+
+  listTags: (): Promise<Tag[]> =>
+    request("/api/tags", { method: "GET" }, (data) => z.array(tagSchema).parse(data)),
+
+  listTaskTags: (projectId: number): Promise<TaskTag[]> =>
+    request(`/api/projects/${projectId}/task-tags`, { method: "GET" }, (data) =>
+      z.array(taskTagSchema).parse(data),
+    ),
+
+  replaceTaskTags: (taskId: number, tags: string[]): Promise<Tag[]> =>
+    request(
+      `/api/tasks/${taskId}/tags`,
+      { method: "PUT", headers: JSON_HEADERS, body: JSON.stringify({ tags }) },
+      (data) => z.array(tagSchema).parse(data),
+    ),
+
+  listComments: (projectId: number): Promise<Comment[]> =>
+    request(`/api/projects/${projectId}/comments`, { method: "GET" }, (data) =>
+      z.array(commentSchema).parse(data),
+    ),
+
+  createComment: (taskId: number, body: string): Promise<Comment> =>
+    request(
+      `/api/tasks/${taskId}/comments`,
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ body }) },
+      (data) => commentSchema.parse(data),
+    ),
+
+  updateComment: (id: number, body: string): Promise<Comment> =>
+    request(
+      `/api/comments/${id}`,
+      { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify({ body }) },
+      (data) => commentSchema.parse(data),
+    ),
+
+  deleteComment: (id: number): Promise<void> =>
+    request(`/api/comments/${id}`, { method: "DELETE" }, () => undefined),
+
+  listAttachments: (projectId: number): Promise<Attachment[]> =>
+    request(`/api/projects/${projectId}/attachments`, { method: "GET" }, (data) =>
+      z.array(attachmentSchema).parse(data),
+    ),
+
+  uploadAttachment: (taskId: number, file: File): Promise<Attachment> => {
+    const body = new FormData();
+    body.append("file", file);
+    return request(
+      `/api/tasks/${taskId}/attachments`,
+      { method: "POST", body },
+      (data) => attachmentSchema.parse(data),
+    );
+  },
+
+  deleteAttachment: (id: number): Promise<void> =>
+    request(`/api/attachments/${id}`, { method: "DELETE" }, () => undefined),
 };

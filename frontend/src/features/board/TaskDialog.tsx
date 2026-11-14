@@ -1,7 +1,21 @@
 import { useEffect, useState } from "react";
 
-import type { Subtask, Task, TaskPlanning, TaskPriority, TaskStatus } from "../../api/types";
-import { BOARD_COLUMNS, PRIORITY_LABELS, estimateLabel } from "./boardModel";
+import type {
+  Attachment,
+  Comment,
+  Subtask,
+  Task,
+  TaskPlanning,
+  TaskPriority,
+  TaskStatus,
+} from "../../api/types";
+import {
+  BOARD_COLUMNS,
+  PRIORITY_LABELS,
+  estimateLabel,
+  formatBytes,
+  formatDateTime,
+} from "./boardModel";
 
 const PRIORITIES: TaskPriority[] = ["low", "normal", "high", "urgent"];
 
@@ -16,6 +30,16 @@ type TaskDialogProps = {
   onCreateSubtask: (title: string) => Promise<void>;
   onToggleSubtask: (id: number, done: boolean) => Promise<void>;
   onDeleteSubtask: (id: number) => Promise<void>;
+  tags: string[];
+  tagSuggestions: string[];
+  onReplaceTags: (tags: string[]) => Promise<void>;
+  comments: Comment[];
+  onCreateComment: (body: string) => Promise<void>;
+  onEditComment: (id: number, body: string) => Promise<void>;
+  onDeleteComment: (id: number) => Promise<void>;
+  attachments: Attachment[];
+  onUploadAttachment: (file: File) => Promise<void>;
+  onDeleteAttachment: (id: number) => Promise<void>;
 };
 
 /** Диалог задачи: правка текста, планирование, смена колонки и удаление. */
@@ -30,6 +54,16 @@ export function TaskDialog({
   onCreateSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  tags,
+  tagSuggestions,
+  onReplaceTags,
+  comments,
+  onCreateComment,
+  onEditComment,
+  onDeleteComment,
+  attachments,
+  onUploadAttachment,
+  onDeleteAttachment,
 }: TaskDialogProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -43,6 +77,11 @@ export function TaskDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [subtaskDraft, setSubtaskDraft] = useState("");
   const [subtaskBusy, setSubtaskBusy] = useState(false);
+  const [tagDraft, setTagDraft] = useState("");
+  const [commentDraft, setCommentDraft] = useState("");
+  const [editingComment, setEditingComment] = useState<number | null>(null);
+  const [editingBody, setEditingBody] = useState("");
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -111,6 +150,64 @@ export function TaskDialog({
 
   const minutes = estimateMinutes();
   const doneSubtasks = subtasks.filter((item) => item.done).length;
+
+  async function addTag() {
+    const name = tagDraft.trim().replace(/^#/, "").trim();
+    if (!name) return;
+    if (tags.some((tag) => tag.toLowerCase() === name.toLowerCase())) {
+      setTagDraft("");
+      return;
+    }
+    try {
+      await onReplaceTags([...tags, name]);
+      setTagDraft("");
+    } catch {
+      // Ошибку показывает доска.
+    }
+  }
+
+  async function removeTag(name: string) {
+    try {
+      await onReplaceTags(tags.filter((tag) => tag !== name));
+    } catch {
+      // Ошибку показывает доска.
+    }
+  }
+
+  async function uploadFile(file: File) {
+    setUploadBusy(true);
+    try {
+      await onUploadAttachment(file);
+    } catch {
+      // Ошибку показывает доска.
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
+  async function addComment() {
+    const body = commentDraft.trim();
+    if (!body) return;
+    try {
+      await onCreateComment(body);
+      setCommentDraft("");
+    } catch {
+      // Ошибку показывает доска.
+    }
+  }
+
+  async function saveComment() {
+    if (editingComment === null) return;
+    const body = editingBody.trim();
+    if (!body) return;
+    try {
+      await onEditComment(editingComment, body);
+      setEditingComment(null);
+      setEditingBody("");
+    } catch {
+      // Ошибку показывает доска.
+    }
+  }
 
   async function addSubtask() {
     const title = subtaskDraft.trim();
@@ -276,6 +373,52 @@ export function TaskDialog({
           </div>
         </div>
 
+        <div className="mt-5">
+          <span className="mb-2 block text-[12px] text-steel">Теги</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1.5 border border-rule px-2 py-0.5 text-[12px]"
+              >
+                {tag}
+                <button
+                  type="button"
+                  aria-label={`Убрать тег ${tag}`}
+                  onClick={() => void removeTag(tag)}
+                  className="text-steel hover:text-ink"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              list="tag-suggestions"
+              value={tagDraft}
+              onChange={(event) => setTagDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void addTag();
+                }
+              }}
+              placeholder="добавить тег"
+              aria-label="Новый тег"
+              className="min-w-[130px] border-b border-rule bg-transparent py-1 text-[13px] outline-none focus:border-signal"
+            />
+            <datalist id="tag-suggestions">
+              {tagSuggestions
+                .filter(
+                  (tag) =>
+                    !tags.some((selected) => selected.toLowerCase() === tag.toLowerCase()),
+                )
+                .map((tag) => (
+                  <option key={tag} value={tag} />
+                ))}
+            </datalist>
+          </div>
+        </div>
+
         <div className="mt-6">
           <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
             <span>Чек-лист</span>
@@ -342,6 +485,145 @@ export function TaskDialog({
               добавить
             </button>
           </form>
+        </div>
+
+        <div className="mt-6">
+          <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
+            <span>Вложения</span>
+            <span className="tabular-nums">{attachments.length} / 10</span>
+          </div>
+
+          {attachments.length > 0 && (
+            <ul>
+              {attachments.map((file) => (
+                <li
+                  key={file.id}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-rule py-1.5 text-[13px] last:border-b-0"
+                >
+                  <a
+                    href={`/api/attachments/${file.id}`}
+                    download={file.filename}
+                    className="truncate hover:text-signal"
+                  >
+                    {file.filename}
+                  </a>
+                  <span className="text-[11px] whitespace-nowrap text-steel tabular-nums">
+                    {formatBytes(file.size)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void onDeleteAttachment(file.id)}
+                    className="text-[12px] text-steel hover:text-ink"
+                  >
+                    удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-[13px] text-steel hover:text-signal">
+            <span aria-hidden="true" className="font-display text-[16px] leading-none text-ink">
+              +
+            </span>
+            {uploadBusy ? "загружаю…" : "прикрепить файл"}
+            <input
+              type="file"
+              className="hidden"
+              disabled={uploadBusy || attachments.length >= 10}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadFile(file);
+              }}
+            />
+          </label>
+          <p className="mt-1 text-[11px] text-steel">любые файлы до 10 МБ, не больше 10 на задачу</p>
+        </div>
+
+        <div className="mt-6">
+          <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
+            <span>Комментарии</span>
+            <span className="tabular-nums">{comments.length}</span>
+          </div>
+
+          {comments.length > 0 && (
+            <div className="space-y-3">
+              {comments.map((comment) =>
+                editingComment === comment.id ? (
+                  <div key={comment.id} className="border-l-2 border-signal pl-3">
+                    <textarea
+                      value={editingBody}
+                      rows={3}
+                      onChange={(event) => setEditingBody(event.target.value)}
+                      aria-label="Редактировать комментарий"
+                      className="w-full resize-y border border-rule bg-transparent p-2 text-[13px] outline-none focus:border-signal"
+                    />
+                    <div className="mt-1.5 flex gap-4 text-[12px]">
+                      <button type="button" onClick={() => void saveComment()} className="text-ink">
+                        сохранить
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingComment(null);
+                          setEditingBody("");
+                        }}
+                        className="text-steel"
+                      >
+                        отмена
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={comment.id} className="border-l-2 border-rule pl-3">
+                    <div className="flex flex-wrap items-baseline gap-3 text-[11px] text-steel">
+                      <span className="tabular-nums">{formatDateTime(comment.created_at)}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingComment(comment.id);
+                          setEditingBody(comment.body);
+                        }}
+                        className="hover:text-ink"
+                      >
+                        редактировать
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void onDeleteComment(comment.id)}
+                        className="hover:text-ink"
+                      >
+                        удалить
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[14px] whitespace-pre-wrap">{comment.body}</p>
+                  </div>
+                ),
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 border border-rule p-2">
+            <textarea
+              value={commentDraft}
+              rows={2}
+              onChange={(event) => setCommentDraft(event.target.value)}
+              placeholder="написать комментарий"
+              aria-label="Новый комментарий"
+              className="w-full resize-y bg-transparent text-[13px] outline-none"
+            />
+            <div className="mt-1 flex justify-end">
+              <button
+                type="button"
+                disabled={!commentDraft.trim()}
+                onClick={() => void addComment()}
+                className="text-[13px] text-ink hover:text-signal disabled:text-steel"
+              >
+                отправить
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-4">

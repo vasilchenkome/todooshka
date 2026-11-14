@@ -3,13 +3,16 @@
 //! Handlers только переводят запрос в вызов сценария и обратно; бизнес-правил здесь нет.
 
 pub mod assets;
+mod attachments;
 pub mod auth;
+mod comments;
 mod dto;
 mod error;
 mod health;
 mod projects;
 mod state;
 mod subtasks;
+mod tags;
 mod tasks;
 
 pub use state::{AppState, ReadinessProbe};
@@ -53,6 +56,27 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/subtasks/{id}",
             patch(subtasks::update).delete(subtasks::delete),
+        )
+        .route("/tags", get(tags::list))
+        .route(
+            "/projects/{project_id}/task-tags",
+            get(tags::list_by_project),
+        )
+        .route("/tasks/{id}/tags", axum::routing::put(tags::replace))
+        .route("/projects/{project_id}/comments", get(comments::list))
+        .route("/tasks/{id}/comments", post(comments::create))
+        .route(
+            "/comments/{id}",
+            patch(comments::update).delete(comments::delete),
+        )
+        .route("/projects/{project_id}/attachments", get(attachments::list))
+        .route(
+            "/tasks/{id}/attachments",
+            post(attachments::upload).layer(DefaultBodyLimit::max(12 * 1024 * 1024)),
+        )
+        .route(
+            "/attachments/{id}",
+            get(attachments::download).delete(attachments::delete),
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

@@ -12,14 +12,15 @@ use http_body_util::BodyExt;
 use serde_json::Value;
 use tempfile::TempDir;
 use todooshka_app::{
-    AuthService, Clock, CreateUser, Login, PasswordHasher, ProjectRepository, ProjectService,
-    RepositoryError, SessionStore, SessionTokens, SubtaskService, TaskService, TaskStore,
-    UserStore,
+    AttachmentService, AuthService, Clock, CommentService, CreateUser, Login, PasswordHasher,
+    ProjectRepository, ProjectService, RepositoryError, SessionStore, SessionTokens,
+    SubtaskService, TagService, TaskService, TaskStore, UserStore,
 };
 use todooshka_domain::{PasswordHash, Timestamp};
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter, router};
 use todooshka_sqlite::{
-    SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTasks, SqliteUsers, connect, migrate,
+    SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTags,
+    SqliteTasks, SqliteUsers, connect, migrate,
 };
 use tower::ServiceExt;
 
@@ -115,6 +116,15 @@ pub async fn app() -> TestApp {
         Arc::clone(&clock) as Arc<dyn Clock>,
     ));
 
+    let tags = Arc::new(TagService::new(Arc::new(SqliteTags::new(pool.clone()))));
+    let comments = Arc::new(CommentService::new(
+        Arc::new(SqliteComments::new(pool.clone())),
+        Arc::clone(&clock) as Arc<dyn Clock>,
+    ));
+    let attachments = Arc::new(AttachmentService::new(
+        Arc::new(SqliteAttachments::new(pool.clone())),
+        Arc::clone(&clock) as Arc<dyn Clock>,
+    ));
     let auth = Arc::new(AuthService::new(
         Arc::new(SqliteUsers::new(pool.clone())) as Arc<dyn UserStore>,
         Arc::new(SqliteSessions::new(pool.clone())) as Arc<dyn SessionStore>,
@@ -142,6 +152,9 @@ pub async fn app() -> TestApp {
             projects,
             tasks,
             subtasks,
+            tags,
+            comments,
+            attachments,
             auth: Arc::clone(&auth),
             login_limiter: LoginLimiter::default(),
             cookie_secure: false,

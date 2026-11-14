@@ -28,13 +28,17 @@ async fn migrations_create_mvp_schema() {
         tables,
         vec![
             "_sqlx_migrations",
+            "attachments",
+            "comments",
             "projects",
             "sessions",
             "subtasks",
+            "tags",
+            "task_tags",
             "tasks",
             "users"
         ],
-        "таблицы должны совпадать с миграциями 0001–0003"
+        "таблицы должны совпадать с миграциями 0001–0006"
     );
 }
 
@@ -54,7 +58,7 @@ async fn migrate_twice_is_safe() {
         .expect("таблица миграций читается");
 
     assert_eq!(
-        applied, 3,
+        applied, 6,
         "каждая миграция должна примениться ровно один раз"
     );
 }

@@ -40,6 +40,33 @@ pub enum DomainError {
     #[error("пункт чек-листа длиннее {max} символов")]
     SubtaskTitleTooLong { max: usize },
 
+    #[error("тег не может быть пустым")]
+    EmptyTag,
+
+    #[error("тег длиннее {max} символов")]
+    TagTooLong { max: usize },
+
+    #[error("комментарий не может быть пустым")]
+    EmptyComment,
+
+    #[error("комментарий длиннее {max} символов")]
+    CommentTooLong { max: usize },
+
+    #[error("имя файла не может быть пустым")]
+    EmptyAttachmentFilename,
+
+    #[error("имя файла длиннее 255 символов")]
+    AttachmentFilenameTooLong,
+
+    #[error("имя файла содержит управляющие символы")]
+    InvalidAttachmentFilename,
+
+    #[error("файл больше 10 МБ")]
+    AttachmentTooLarge,
+
+    #[error("файл пустой")]
+    EmptyAttachment,
+
     #[error("статус задачи и время завершения не согласованы")]
     TaskCompletionInconsistent,
 

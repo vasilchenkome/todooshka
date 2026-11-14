@@ -16,11 +16,14 @@ use std::time::Duration;
 use async_trait::async_trait;
 use sqlx::SqlitePool;
 use todooshka_app::{
-    AuthService, ChangePassword, Clock, CreateUser, ProjectRepository, ProjectService,
-    SubtaskService, TaskService, TaskStore,
+    AttachmentService, AuthService, ChangePassword, Clock, CommentService, CreateUser,
+    ProjectRepository, ProjectService, SubtaskService, TagService, TaskService, TaskStore,
 };
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter};
-use todooshka_sqlite::{SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTasks, SqliteUsers};
+use todooshka_sqlite::{
+    SqliteAttachments, SqliteComments, SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTags,
+    SqliteTasks, SqliteUsers,
+};
 
 use crate::clock::SystemClock;
 use crate::security::{Argon2PasswordHasher, RandomSessionTokens};
@@ -140,6 +143,15 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         Arc::new(SqliteSubtasks::new(pool.clone())),
         Arc::clone(&clock),
     ));
+    let tags = Arc::new(TagService::new(Arc::new(SqliteTags::new(pool.clone()))));
+    let comments = Arc::new(CommentService::new(
+        Arc::new(SqliteComments::new(pool.clone())),
+        Arc::clone(&clock),
+    ));
+    let attachments = Arc::new(AttachmentService::new(
+        Arc::new(SqliteAttachments::new(pool.clone())),
+        Arc::clone(&clock),
+    ));
     let auth = Arc::new(AuthService::new(
         Arc::new(SqliteUsers::new(pool.clone())),
         Arc::new(SqliteSessions::new(pool.clone())),
@@ -152,6 +164,9 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         projects,
         tasks,
         subtasks,
+        tags,
+        comments,
+        attachments,
         auth,
         login_limiter: LoginLimiter::default(),
         cookie_secure: config::cookie_secure(),

@@ -71,6 +71,13 @@ impl From<todooshka_domain::DomainError> for ApiError {
 impl From<ApplicationError> for ApiError {
     fn from(error: ApplicationError) -> Self {
         match error {
+            ApplicationError::Domain(todooshka_domain::DomainError::AttachmentTooLarge) => {
+                Self::new(
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    "payload_too_large",
+                    "файл больше 10 МБ",
+                )
+            }
             ApplicationError::Domain(err) => Self::new(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "validation_failed",
@@ -90,6 +97,21 @@ impl From<ApplicationError> for ApiError {
                 StatusCode::NOT_FOUND,
                 "not_found",
                 format!("пункт чек-листа {id} не найден"),
+            ),
+            ApplicationError::CommentNotFound(id) => Self::new(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("комментарий {id} не найден"),
+            ),
+            ApplicationError::AttachmentNotFound(id) => Self::new(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("вложение {id} не найдено"),
+            ),
+            ApplicationError::AttachmentsLimitReached => Self::new(
+                StatusCode::CONFLICT,
+                "attachments_limit",
+                "к задаче уже прикреплено 10 файлов",
             ),
             ApplicationError::UserNotFound(username) => Self::new(
                 StatusCode::NOT_FOUND,

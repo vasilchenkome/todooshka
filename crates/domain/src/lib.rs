@@ -3,15 +3,23 @@
 //! Крейт намеренно не зависит от axum, sqlx, tokio, конфигурации и форматов API:
 //! зависимости направлены только внутрь, к бизнес-правилам.
 
+mod attachment;
+mod comment;
 mod error;
 mod ordering;
 mod planning;
 mod project;
 mod subtask;
+mod tag;
 mod task;
 mod time;
 mod user;
 
+pub use attachment::{
+    AttachmentFilename, AttachmentId, AttachmentMeta, MAX_ATTACHMENT_BYTES,
+    MAX_ATTACHMENTS_PER_TASK, content_type_for,
+};
+pub use comment::{Comment, CommentBody, CommentId, CommentSnapshot, MAX_COMMENT_CHARS};
 pub use error::DomainError;
 pub use ordering::{STEP, between, evenly};
 pub use planning::{DueDate, EstimateMinutes, MAX_ESTIMATE_MINUTES, Planning, Priority};
@@ -20,6 +28,7 @@ pub use project::{
     ProjectColor, ProjectDraft, ProjectId, ProjectName, ProjectSnapshot,
 };
 pub use subtask::{MAX_SUBTASK_TITLE_CHARS, Subtask, SubtaskId, SubtaskSnapshot, SubtaskTitle};
+pub use tag::{MAX_TAG_CHARS, Tag, TagId, TagName, TaskTag};
 pub use task::{
     MAX_TASK_DESCRIPTION_CHARS, MAX_TASK_TITLE_CHARS, Task, TaskDraft, TaskId, TaskSnapshot,
     TaskStatus, TaskTitle,

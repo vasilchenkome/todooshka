@@ -153,9 +153,84 @@ export function estimateLabel(minutes: number | null): string {
   return `${hours} ч ${rest} мин`;
 }
 
+export type BoardFilters = {
+  query: string;
+  priority: TaskPriority | "";
+  due: "" | "overdue" | "week" | "none";
+  tag: string;
+};
+
+export function daysUntilDue(dueOn: string | null): number | null {
+  const date = dueOn ? parseDueDate(dueOn) : null;
+  if (!date) return null;
+  return Math.round((date.getTime() - startOfToday().getTime()) / 86_400_000);
+}
+
+/** Клиентские фильтры доски: поиск по тексту, приоритет, срок и тег. */
+export function filterTasks(
+  tasks: Task[],
+  filters: BoardFilters,
+  tagsByTask: Map<number, string[]>,
+): Task[] {
+  const query = filters.query.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    if (
+      query &&
+      !task.title.toLowerCase().includes(query) &&
+      !task.description.toLowerCase().includes(query)
+    ) {
+      return false;
+    }
+    if (filters.priority && task.priority !== filters.priority) return false;
+
+    if (filters.due) {
+      const days = daysUntilDue(task.due_on);
+      if (filters.due === "none" && task.due_on) return false;
+      if (filters.due === "overdue" && (days === null || days >= 0)) return false;
+      if (filters.due === "week" && (days === null || days < 0 || days > 7)) return false;
+    }
+
+    if (filters.tag) {
+      const tags = tagsByTask.get(task.id) ?? [];
+      if (!tags.some((tag) => tag.toLowerCase() === filters.tag.toLowerCase())) return false;
+    }
+
+    return true;
+  });
+}
+
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: "низкий",
   normal: "обычный",
   high: "высокий",
   urgent: "срочный",
 };
+
+export function formatDateTime(unixSeconds: number): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .format(new Date(unixSeconds * 1000))
+    .replace(".", "");
+}
+
+export function pluralRu(count: number, one: string, few: string, many: string): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} ${one}`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} ${few}`;
+  return `${count} ${many}`;
+}
+
+export function formatBytes(size: number): string {
+  if (size < 1024) return `${size} Б`;
+  const kilobytes = size / 1024;
+  if (kilobytes < 1024) {
+    return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(kilobytes)} КБ`;
+  }
+  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(kilobytes / 1024)} МБ`;
+}

@@ -97,6 +97,31 @@ export type Subtask = z.infer<typeof subtaskSchema>;
 
 export const subtaskListSchema = z.array(subtaskSchema);
 
+export const tagSchema = z.object({ id: z.number(), name: z.string() });
+export type Tag = z.infer<typeof tagSchema>;
+
+export const taskTagSchema = z.object({ task_id: z.number(), name: z.string() });
+export type TaskTag = z.infer<typeof taskTagSchema>;
+
+export const commentSchema = z.object({
+  id: z.number(),
+  task_id: z.number(),
+  body: z.string(),
+  created_at: z.number(),
+  updated_at: z.number(),
+});
+export type Comment = z.infer<typeof commentSchema>;
+
+export const attachmentSchema = z.object({
+  id: z.number(),
+  task_id: z.number(),
+  filename: z.string(),
+  content_type: z.string(),
+  size: z.number(),
+  created_at: z.number(),
+});
+export type Attachment = z.infer<typeof attachmentSchema>;
+
 export type NewTask = {
   title: string;
   description?: string;
