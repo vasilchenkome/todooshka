@@ -43,12 +43,26 @@ export class ApiError extends Error {
 
 const JSON_HEADERS = { "Content-Type": "application/json" } as const;
 
+let apiLocale: "ru" | "en" = "ru";
+try {
+  const stored = localStorage.getItem("todooshka.locale");
+  if (stored === "en") apiLocale = "en";
+} catch {
+  // localStorage may be unavailable; Russian remains the safe default.
+}
+
+export function setApiLocale(locale: "ru" | "en") {
+  apiLocale = locale;
+}
+
 async function request<T>(
   path: string,
   init: RequestInit,
   parse: (data: unknown) => T,
 ): Promise<T> {
-  const response = await fetch(path, { credentials: "same-origin", ...init });
+  const headers = new Headers(init.headers);
+  headers.set("Accept-Language", apiLocale);
+  const response = await fetch(path, { credentials: "same-origin", ...init, headers });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -56,7 +70,13 @@ async function request<T>(
     if (parsed.success) {
       throw new ApiError(response.status, parsed.data.error.code, parsed.data.error.message);
     }
-    throw new ApiError(response.status, "unknown", `запрос не удался (${response.status})`);
+    throw new ApiError(
+      response.status,
+      "unknown",
+      apiLocale === "en"
+        ? `request failed (${response.status})`
+        : `запрос не удался (${response.status})`,
+    );
   }
 
   if (response.status === 204) {

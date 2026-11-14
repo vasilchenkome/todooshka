@@ -4,6 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 import type { Task, TaskStatus } from "../../api/types";
+import { useI18n } from "../../i18n";
 import { TaskCard } from "./TaskCard";
 
 type BoardColumnProps = {
@@ -41,6 +42,7 @@ export function BoardColumn({
   onOpenTask,
   onCreate,
 }: BoardColumnProps) {
+  const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `column:${status}` });
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
@@ -92,7 +94,7 @@ export function BoardColumn({
       <SortableContext items={visible.map((task) => task.id)} strategy={verticalListSortingStrategy}>
         {tasks.length === 0 && !filtered && (
           <p className="mx-4 mt-4 text-[13px] text-steel">
-            пусто — добавь задачу или перетащи сюда
+            {t("board.emptyColumn")}
           </p>
         )}
         <ul className="mt-0 flex-1">
@@ -117,7 +119,7 @@ export function BoardColumn({
           onClick={() => setShowAll(true)}
           className="mx-4 mt-3.5 self-start border-b border-rule pb-0.5 text-[12px] text-steel hover:border-ink hover:text-ink"
         >
-          показать ещё {hiddenCount}
+          {t("board.showMore", { count: hiddenCount })}
         </button>
       )}
 
@@ -126,8 +128,8 @@ export function BoardColumn({
           <input
             autoFocus
             value={draft}
-            aria-label="Название задачи"
-            placeholder="что нужно сделать"
+            aria-label={t("board.addAria")}
+            placeholder={t("board.addPlaceholder")}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
@@ -142,7 +144,7 @@ export function BoardColumn({
             disabled={creating || !draft.trim()}
             className="text-[13px] text-ink hover:text-signal disabled:text-steel"
           >
-            добавить
+            {t("board.addButton")}
           </button>
           <button
             type="button"
@@ -152,7 +154,7 @@ export function BoardColumn({
             }}
             className="text-[13px] text-steel hover:text-ink"
           >
-            отмена
+            {t("common.cancel")}
           </button>
         </form>
       ) : (
@@ -164,7 +166,7 @@ export function BoardColumn({
           <span aria-hidden="true" className="font-display text-[18px] leading-none text-ink">
             +
           </span>
-          задача
+          {t("board.taskButton")}
         </button>
       )}
     </section>

@@ -2,7 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { Task } from "../../api/types";
-import { PRIORITY_LABELS, dueLabel, pluralRu } from "./boardModel";
+import { useI18n } from "../../i18n";
+import { dueLabel, priorityLabel } from "./boardModel";
 
 type TaskCardProps = {
   task: Task;
@@ -38,6 +39,7 @@ export function TaskCard({
   comments,
   attachments,
 }: TaskCardProps) {
+  const { t, plural, locale } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -48,7 +50,7 @@ export function TaskCard({
     touchAction: "manipulation" as const,
   };
 
-  const due = dueLabel(task.due_on);
+  const due = dueLabel(task.due_on, locale);
   const dueClass =
     due.tone === "over"
       ? "text-signal"
@@ -83,17 +85,17 @@ export function TaskCard({
           <span className={`tabular-nums ${dueClass}`}>{due.text}</span>
           {subtasks && subtasks.total > 0 && (
             <span className="whitespace-nowrap tabular-nums">
-              чек-лист {subtasks.done}/{subtasks.total}
+              {t("card.checklist", { done: subtasks.done, total: subtasks.total })}
             </span>
           )}
           {attachments !== undefined && attachments > 0 && (
             <span className="whitespace-nowrap">
-              {pluralRu(attachments, "файл", "файла", "файлов")}
+              {plural("plural.files", attachments)}
             </span>
           )}
           {comments !== undefined && comments > 0 && (
             <span className="whitespace-nowrap">
-              {pluralRu(comments, "комментарий", "комментария", "комментариев")}
+              {plural("plural.comments", comments)}
             </span>
           )}
           {task.priority !== "normal" && (
@@ -101,7 +103,7 @@ export function TaskCard({
               className={`ml-auto flex items-center gap-1.5 whitespace-nowrap ${PRIORITY_TEXT[task.priority]}`}
             >
               <span className={`h-[7px] w-[7px] ${PRIORITY_DOT[task.priority]}`} />
-              {PRIORITY_LABELS[task.priority]}
+              {priorityLabel(task.priority, locale)}
             </span>
           )}
         </p>

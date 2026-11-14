@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Project } from "../../api/types";
+import { useI18n } from "../../i18n";
 
 type ProjectRowProps = {
   project: Project;
@@ -20,6 +21,7 @@ export function ProjectRow({
   onRename,
   onToggleArchive,
 }: ProjectRowProps) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(project.name);
 
@@ -44,7 +46,7 @@ export function ProjectRow({
           <input
             autoFocus
             value={draft}
-            aria-label="Название проекта"
+            aria-label={t("project.renameAria")}
             onChange={(event) => setDraft(event.target.value)}
             onBlur={commitRename}
             onKeyDown={(event) => {
@@ -81,7 +83,7 @@ export function ProjectRow({
               disabled={busy}
               className="hover:text-ink disabled:opacity-60"
             >
-              вернуть из архива
+              {t("project.restore")}
             </button>
           ) : (
             <>
@@ -90,7 +92,7 @@ export function ProjectRow({
                 onClick={() => setEditing(true)}
                 className="hover:text-ink"
               >
-                переименовать
+                {t("project.rename")}
               </button>
               <button
                 type="button"
@@ -98,7 +100,7 @@ export function ProjectRow({
                 disabled={busy}
                 className="hover:text-ink disabled:opacity-60"
               >
-                в архив
+                {t("project.archive")}
               </button>
             </>
           )}
@@ -106,9 +108,9 @@ export function ProjectRow({
       </div>
 
       <div className="grid grid-cols-3 gap-4 md:contents">
-        <Stat value={counts.backlog} label="бэклог" />
-        <Stat value={counts.in_progress} label="в работе" />
-        <Stat value={counts.done} label="готово" />
+        <Stat value={counts.backlog} label={t("status.backlog")} />
+        <Stat value={counts.in_progress} label={t("status.in_progress")} />
+        <Stat value={counts.done} label={t("status.done")} />
       </div>
 
       <div>
@@ -116,7 +118,9 @@ export function ProjectRow({
           <span className="block h-0.5 bg-ink" style={{ width: `${doneShare}%` }} />
         </span>
         <em className="mt-1.5 block text-[11px] text-steel not-italic tabular-nums">
-          {total === 0 ? "нет задач" : `${counts.done} из ${total} задач`}
+          {total === 0
+            ? t("project.noTasks")
+            : t("project.progress", { done: counts.done, total })}
         </em>
       </div>
     </li>

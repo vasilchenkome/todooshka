@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
 import type { ProjectPatch } from "../../api/types";
+import { useI18n } from "../../i18n";
 import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { AppBar } from "../../shared/ui/AppBar";
 import { ProjectRow } from "./ProjectRow";
@@ -11,7 +12,8 @@ import { ProjectRow } from "./ProjectRow";
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  usePageTitle("Проекты — todooshka");
+  const { t } = useI18n();
+  usePageTitle(t("page.projects"));
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -38,7 +40,7 @@ export default function ProjectsPage() {
   const mutationError = createProject.error ?? updateProject.error;
 
   function errorText(error: unknown): string {
-    return error instanceof ApiError ? error.message : "не удалось сохранить изменения";
+    return error instanceof ApiError ? error.message : t("errors.save");
   }
 
   function startCreating() {
@@ -52,9 +54,9 @@ export default function ProjectsPage() {
 
       <main className="flex-1 px-5 py-8 md:px-12 md:py-12">
         <div className="w-full max-w-[1180px]">
-          <h1 className="font-display text-[32px] font-semibold tracking-[-0.02em]">Проекты</h1>
+          <h1 className="font-display text-[32px] font-semibold tracking-[-0.02em]">{t("projects.title")}</h1>
           <p className="mt-1.5 mb-7 text-[13px] text-steel">
-            {active.length} активных, {archived.length} в архиве. Цифры — задачи по колонкам.
+            {t("projects.summary", { active: active.length, archived: archived.length })}
           </p>
 
           {mutationError && (
@@ -64,7 +66,7 @@ export default function ProjectsPage() {
           )}
 
           {projects.isPending && (
-            <p className="py-10 text-[14px] text-steel">загружаю проекты…</p>
+            <p className="py-10 text-[14px] text-steel">{t("projects.loading")}</p>
           )}
 
           {projects.isError && (
@@ -77,7 +79,7 @@ export default function ProjectsPage() {
                 onClick={() => void projects.refetch()}
                 className="mt-3 text-[13px] text-steel underline-offset-4 hover:text-ink hover:underline"
               >
-                повторить
+                {t("common.retry")}
               </button>
             </div>
           )}
@@ -102,7 +104,7 @@ export default function ProjectsPage() {
 
           {!projects.isPending && !projects.isError && active.length === 0 && (
             <div className="border-t border-rule py-10 text-[14px] text-steel">
-              Пока нет проектов. Начни с одного — доска появится сразу.
+              {t("projects.empty")}
             </div>
           )}
 
@@ -119,8 +121,8 @@ export default function ProjectsPage() {
                 <input
                   autoFocus
                   value={newName}
-                  aria-label="Название нового проекта"
-                  placeholder="название проекта"
+                  aria-label={t("projects.nameAria")}
+                  placeholder={t("projects.namePlaceholder")}
                   onChange={(event) => setNewName(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
@@ -135,7 +137,7 @@ export default function ProjectsPage() {
                   disabled={!newName.trim() || createProject.isPending}
                   className="text-[13px] text-ink transition-colors hover:text-signal disabled:text-steel"
                 >
-                  создать
+                  {t("projects.create")}
                 </button>
                 <button
                   type="button"
@@ -145,7 +147,7 @@ export default function ProjectsPage() {
                   }}
                   className="text-[13px] text-steel hover:text-ink"
                 >
-                  отмена
+                  {t("common.cancel")}
                 </button>
               </form>
             ) : (
@@ -157,7 +159,7 @@ export default function ProjectsPage() {
                 <span aria-hidden="true" className="font-display text-[20px] leading-none text-ink">
                   +
                 </span>
-                новый проект
+                {t("projects.new")}
               </button>
             )}
           </div>
@@ -169,7 +171,8 @@ export default function ProjectsPage() {
                 onClick={() => setShowArchived((shown) => !shown)}
                 className="text-[13px] text-steel hover:text-ink"
               >
-                архив: {archived.length} {showArchived ? "свернуть" : "показать"}
+                {t("projects.archive", { count: archived.length })}{" "}
+                {t(showArchived ? "projects.hide" : "projects.show")}
               </button>
 
               {showArchived && (

@@ -1,10 +1,14 @@
 import type { Task, TaskPriority, TaskStatus } from "../../api/types";
+import { formatShortDate } from "../../i18n/format";
+import type { MessageKey } from "../../i18n/messages.ru";
+import { translate } from "../../i18n/translate";
+import type { Locale } from "../../i18n/types";
 
-export const BOARD_COLUMNS: { status: TaskStatus; title: string }[] = [
-  { status: "backlog", title: "Бэклог" },
-  { status: "in_progress", title: "В работе" },
-  { status: "done", title: "Готово" },
-];
+export const BOARD_COLUMNS: TaskStatus[] = ["backlog", "in_progress", "done"];
+
+export function statusLabel(status: TaskStatus, locale: Locale): string {
+  return translate(locale, `status.${status}` as MessageKey);
+}
 
 export type BoardColumns = Record<TaskStatus, Task[]>;
 
@@ -95,16 +99,9 @@ export function resolveDrop(
   return { status: overTask.status, index: target.findIndex((task) => task.id === overTask.id) };
 }
 
-export function formatDay(unixSeconds: number): string {
-  return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" })
-    .format(new Date(unixSeconds * 1000))
-    .replace(".", "");
+export function formatDay(unixSeconds: number, locale: Locale): string {
+  return formatShortDate(new Date(unixSeconds * 1000), locale, false);
 }
-
-const MONTHS = [
-  "янв", "фев", "мар", "апр", "мая", "июн",
-  "июл", "авг", "сен", "окт", "ноя", "дек",
-];
 
 export type DueTone = "over" | "today" | "plain" | "none";
 
@@ -125,32 +122,34 @@ function startOfToday(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-export function dueLabel(dueOn: string | null): DueLabel {
-  if (!dueOn) return { text: "без срока", tone: "none" };
+export function dueLabel(dueOn: string | null, locale: Locale): DueLabel {
+  const none = translate(locale, "due.none");
+  if (!dueOn) return { text: none, tone: "none" };
 
   const date = parseDueDate(dueOn);
-  if (!date) return { text: "без срока", tone: "none" };
+  if (!date) return { text: none, tone: "none" };
 
   const today = startOfToday();
   const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
-  const day = date.getDate();
-  const month = MONTHS[date.getMonth()];
-  const sameYear = date.getFullYear() === today.getFullYear();
-  const short = sameYear ? `${day} ${month}` : `${day} ${month} ${date.getFullYear()}`;
+  const short = formatShortDate(date, locale, date.getFullYear() !== today.getFullYear());
 
-  if (days < 0) return { text: `просрочено · ${short}`, tone: "over" };
-  if (days === 0) return { text: "сегодня", tone: "today" };
-  if (days === 1) return { text: "завтра", tone: "plain" };
+  if (days < 0) return { text: translate(locale, "due.overdue", { date: short }), tone: "over" };
+  if (days === 0) return { text: translate(locale, "due.today"), tone: "today" };
+  if (days === 1) return { text: translate(locale, "due.tomorrow"), tone: "plain" };
   return { text: short, tone: "plain" };
 }
 
-export function estimateLabel(minutes: number | null): string {
-  if (!minutes) return "не задана";
+export function estimateLabel(minutes: number | null, locale: Locale): string {
+  if (!minutes) return translate(locale, "estimate.none");
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (hours === 0) return `${rest} мин`;
-  if (rest === 0) return `${hours} ч`;
-  return `${hours} ч ${rest} мин`;
+  if (hours === 0) return translate(locale, "estimate.minutes", { minutes: rest });
+  if (rest === 0) return translate(locale, "estimate.hours", { hours });
+  return translate(locale, "estimate.hoursMinutes", { hours, minutes: rest });
+}
+
+export function priorityLabel(priority: TaskPriority, locale: Locale): string {
+  return translate(locale, `priority.${priority}` as MessageKey);
 }
 
 export type BoardFilters = {
@@ -200,37 +199,4 @@ export function filterTasks(
   });
 }
 
-export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "низкий",
-  normal: "обычный",
-  high: "высокий",
-  urgent: "срочный",
-};
 
-export function formatDateTime(unixSeconds: number): string {
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-    .format(new Date(unixSeconds * 1000))
-    .replace(".", "");
-}
-
-export function pluralRu(count: number, one: string, few: string, many: string): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${count} ${one}`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} ${few}`;
-  return `${count} ${many}`;
-}
-
-export function formatBytes(size: number): string {
-  if (size < 1024) return `${size} Б`;
-  const kilobytes = size / 1024;
-  if (kilobytes < 1024) {
-    return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(kilobytes)} КБ`;
-  }
-  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(kilobytes / 1024)} МБ`;
-}

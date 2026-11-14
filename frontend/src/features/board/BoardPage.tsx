@@ -15,19 +15,21 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError, api } from "../../api/client";
 import type { Task, TaskPlanning, TaskPriority, TaskStatus } from "../../api/types";
+import { useI18n } from "../../i18n";
 import { usePageTitle } from "../../shared/lib/usePageTitle";
 import { AppBar } from "../../shared/ui/AppBar";
 import { BoardColumn } from "./BoardColumn";
 import { TaskDialog } from "./TaskDialog";
 import {
   BOARD_COLUMNS,
-  PRIORITY_LABELS,
   applyOptimisticMove,
   areOrdered,
   filterTasks,
   groupByStatus,
+  priorityLabel,
   projectNumbers,
   resolveDrop,
+  statusLabel,
   type BoardFilters,
 } from "./boardModel";
 
@@ -35,11 +37,12 @@ export default function BoardPage() {
   const { projectId } = useParams();
   const id = Number(projectId);
   const queryClient = useQueryClient();
+  const { t, locale } = useI18n();
   const taskKey = ["tasks", id] as const;
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
   const project = projects.data?.find((item) => item.id === id);
-  usePageTitle(project ? `${project.name} — todooshka` : "Доска — todooshka");
+  usePageTitle(project ? t("page.project", { name: project.name }) : t("page.board"));
 
   const tasksQuery = useQuery({
     queryKey: taskKey,
@@ -121,8 +124,8 @@ export default function BoardPage() {
   const [dialogTask, setDialogTask] = useState<Task | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  function errorText(error: unknown): string {
-    return error instanceof ApiError ? error.message : "не удалось сохранить изменения";
+  function errorText(error: unknown, fallback = t("errors.save")): string {
+    return error instanceof ApiError ? error.message : fallback;
   }
 
   const moveTask = useMutation({
@@ -325,13 +328,13 @@ export default function BoardPage() {
           <>
             <Link
               to="/"
-              aria-label="К проектам"
+              aria-label={t("board.backAria")}
               className="shrink-0 border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
             >
-              ←<span className="hidden sm:inline"> проекты</span>
+              ←<span className="hidden sm:inline"> {t("board.back")}</span>
             </Link>
             <h1 className="min-w-0 truncate font-display text-[18px] font-semibold tracking-[-0.01em]">
-              {project?.name ?? "Доска"}
+              {project?.name ?? t("board.fallback")}
             </h1>
           </>
         }
@@ -345,7 +348,7 @@ export default function BoardPage() {
         )}
 
         <nav className="flex gap-5 overflow-x-auto border-b border-rule px-4 md:hidden">
-          {BOARD_COLUMNS.map(({ status, title }) => (
+          {BOARD_COLUMNS.map((status) => (
             <button
               key={status}
               type="button"
@@ -356,7 +359,7 @@ export default function BoardPage() {
                   : "border-transparent text-steel"
               }`}
             >
-              {title}
+              {statusLabel(status, locale)}
               <span className="ml-1 text-steel tabular-nums">{visibleColumns[status].length}</span>
             </button>
           ))}
@@ -366,41 +369,41 @@ export default function BoardPage() {
           <input
             value={filters.query}
             onChange={(event) => setFilter("query", event.target.value)}
-            placeholder="поиск по задачам"
-            aria-label="Поиск по задачам"
+            placeholder={t("board.searchPlaceholder")}
+            aria-label={t("board.searchAria")}
             className="min-w-[150px] flex-1 border-b border-rule bg-transparent py-1 text-[13px] outline-none focus:border-signal md:max-w-[280px]"
           />
           <select
             value={filters.priority}
             onChange={(event) => setFilter("priority", event.target.value)}
-            aria-label="Приоритет"
+            aria-label={t("dialog.priority")}
             className="border border-rule bg-paper px-2 py-1.5 text-[12px] text-steel outline-none focus:border-ink"
           >
-            <option value="">приоритет: любой</option>
+            <option value="">{t("board.priorityAny")}</option>
             {(["low", "normal", "high", "urgent"] as const).map((value) => (
               <option key={value} value={value}>
-                {PRIORITY_LABELS[value]}
+                {priorityLabel(value, locale)}
               </option>
             ))}
           </select>
           <select
             value={filters.due}
             onChange={(event) => setFilter("due", event.target.value)}
-            aria-label="Срок"
+            aria-label={t("dialog.due")}
             className="border border-rule bg-paper px-2 py-1.5 text-[12px] text-steel outline-none focus:border-ink"
           >
-            <option value="">срок: любой</option>
-            <option value="overdue">просрочено</option>
-            <option value="week">на неделю</option>
-            <option value="none">без срока</option>
+            <option value="">{t("board.dueAny")}</option>
+            <option value="overdue">{t("board.dueOverdue")}</option>
+            <option value="week">{t("board.dueWeek")}</option>
+            <option value="none">{t("board.dueNone")}</option>
           </select>
           <select
             value={filters.tag}
             onChange={(event) => setFilter("tag", event.target.value)}
-            aria-label="Тег"
+            aria-label={t("dialog.tags")}
             className="max-w-[150px] border border-rule bg-paper px-2 py-1.5 text-[12px] text-steel outline-none focus:border-ink"
           >
-            <option value="">тег: все</option>
+            <option value="">{t("board.tagAll")}</option>
             {(allTagsQuery.data ?? []).map((tag) => (
               <option key={tag.id} value={tag.name}>
                 {tag.name}
@@ -413,32 +416,32 @@ export default function BoardPage() {
               onClick={resetFilters}
               className="ml-auto text-[12px] text-steel hover:text-ink"
             >
-              сбросить
+              {t("board.reset")}
             </button>
           )}
         </div>
 
         {filterActive && visibleTasks.length === 0 && !tasksQuery.isPending && (
           <p className="px-4 py-8 text-[14px] text-steel md:px-7">
-            ничего не найдено — измени фильтры или сбрось их.
+            {t("board.noMatches")}
           </p>
         )}
 
         {tasksQuery.isPending && (
-          <p className="px-4 py-10 text-[14px] text-steel md:px-7">загружаю доску…</p>
+          <p className="px-4 py-10 text-[14px] text-steel md:px-7">{t("board.loading")}</p>
         )}
 
         {tasksQuery.isError && (
           <div className="px-4 py-8 md:px-7">
             <p role="alert" className="border-l-2 border-signal pl-3 text-[13px]">
-              {errorText(tasksQuery.error)}
+              {errorText(tasksQuery.error, t("errors.load"))}
             </p>
             <button
               type="button"
               onClick={() => void tasksQuery.refetch()}
               className="mt-3 text-[13px] text-steel hover:text-ink"
             >
-              повторить
+              {t("common.retry")}
             </button>
           </div>
         )}
@@ -452,11 +455,11 @@ export default function BoardPage() {
             onDragCancel={() => setDragged(null)}
           >
             <div className="flex-1 md:grid md:grid-cols-3 md:divide-x md:divide-rule">
-              {BOARD_COLUMNS.map(({ status, title }) => (
+              {BOARD_COLUMNS.map((status) => (
                 <BoardColumn
                   key={status}
                   status={status}
-                  title={title}
+                  title={statusLabel(status, locale)}
                   tasks={visibleColumns[status]}
                   numbers={numbers}
                   subtasks={subtaskCounts}

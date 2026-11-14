@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { useI18n } from "../../i18n";
+import { formatBytes, formatDateTime } from "../../i18n/format";
 import type {
   Attachment,
   Comment,
@@ -11,10 +13,9 @@ import type {
 } from "../../api/types";
 import {
   BOARD_COLUMNS,
-  PRIORITY_LABELS,
   estimateLabel,
-  formatBytes,
-  formatDateTime,
+  priorityLabel,
+  statusLabel,
 } from "./boardModel";
 
 const PRIORITIES: TaskPriority[] = ["low", "normal", "high", "urgent"];
@@ -65,6 +66,7 @@ export function TaskDialog({
   onUploadAttachment,
   onDeleteAttachment,
 }: TaskDialogProps) {
+  const { t, locale } = useI18n();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -103,7 +105,7 @@ export function TaskDialog({
   async function save() {
     const minutes = estimateMinutes();
     if (Number.isNaN(minutes)) {
-      setEstimateError("оценка — целое число минут от 1 до 100000");
+      setEstimateError(t("dialog.estimateError"));
       return;
     }
     setEstimateError(null);
@@ -233,7 +235,7 @@ export function TaskDialog({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Задача"
+        aria-label={t("dialog.aria")}
         className="max-h-[92dvh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-ink bg-paper p-5 md:max-h-[85dvh] md:p-7"
       >
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -241,12 +243,12 @@ export function TaskDialog({
             {String(task.id).padStart(3, "0")}
           </span>
           <button type="button" onClick={onClose} className="text-[13px] text-steel hover:text-ink">
-            закрыть
+            {t("common.close")}
           </button>
         </div>
 
         <label className="block">
-          <span className="mb-1 block text-[12px] text-steel">Заголовок</span>
+          <span className="mb-1 block text-[12px] text-steel">{t("dialog.title")}</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -261,7 +263,7 @@ export function TaskDialog({
         </label>
 
         <label className="mt-6 block">
-          <span className="mb-1 block text-[12px] text-steel">Описание</span>
+          <span className="mb-1 block text-[12px] text-steel">{t("dialog.description")}</span>
           <textarea
             value={description}
             rows={4}
@@ -272,14 +274,14 @@ export function TaskDialog({
                 if (title.trim() && !busy) void save();
               }
             }}
-            placeholder="детали, ссылки, что учесть"
+            placeholder={t("dialog.descriptionPlaceholder")}
             className="w-full resize-y border border-rule bg-transparent p-3 text-[14px] outline-none focus:border-signal"
           />
         </label>
 
         <div className="mt-6 grid gap-x-5 gap-y-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-[12px] text-steel">Срок</span>
+            <span className="mb-1 block text-[12px] text-steel">{t("dialog.due")}</span>
             <div className="flex items-end gap-2 border-b border-rule pb-2">
               <input
                 type="date"
@@ -293,14 +295,14 @@ export function TaskDialog({
                   onClick={() => setDueOn("")}
                   className="shrink-0 text-[11px] text-steel hover:text-ink"
                 >
-                  очистить
+                  {t("common.clear")}
                 </button>
               )}
             </div>
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-[12px] text-steel">Оценка, минут</span>
+            <span className="mb-1 block text-[12px] text-steel">{t("dialog.estimate")}</span>
             <div className="flex items-end gap-2 border-b border-rule pb-2">
               <input
                 type="number"
@@ -308,7 +310,7 @@ export function TaskDialog({
                 max={100000}
                 step={1}
                 inputMode="numeric"
-                placeholder="90"
+                placeholder={t("dialog.estimatePlaceholder")}
                 value={estimate}
                 onChange={(event) => {
                   setEstimate(event.target.value);
@@ -317,7 +319,7 @@ export function TaskDialog({
                 className="w-full bg-transparent text-[14px] tabular-nums outline-none"
               />
               <span className="shrink-0 text-[11px] whitespace-nowrap text-steel">
-                {Number.isNaN(minutes) ? "" : minutes === null ? "не задана" : estimateLabel(minutes)}
+                {Number.isNaN(minutes) ? "" : estimateLabel(minutes, locale)}
               </span>
             </div>
           </label>
@@ -330,7 +332,7 @@ export function TaskDialog({
         )}
 
         <div className="mt-5">
-          <span className="mb-2 block text-[12px] text-steel">Приоритет</span>
+          <span className="mb-2 block text-[12px] text-steel">{t("dialog.priority")}</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-rule">
             {PRIORITIES.map((value) => {
               const active = priority === value;
@@ -346,7 +348,7 @@ export function TaskDialog({
                   onClick={() => setPriority(value)}
                   className={`-mb-px border-b-2 pb-2 text-[13px] transition-colors ${tone}`}
                 >
-                  {PRIORITY_LABELS[value]}
+                  {priorityLabel(value, locale)}
                 </button>
               );
             })}
@@ -354,9 +356,9 @@ export function TaskDialog({
         </div>
 
         <div className="mt-5">
-          <span className="mb-2 block text-[12px] text-steel">Колонка</span>
+          <span className="mb-2 block text-[12px] text-steel">{t("dialog.column")}</span>
           <div className="flex gap-5 border-b border-rule">
-            {BOARD_COLUMNS.map(({ status: value, title: label }) => (
+            {BOARD_COLUMNS.map((value) => (
               <button
                 key={value}
                 type="button"
@@ -367,14 +369,14 @@ export function TaskDialog({
                     : "border-transparent text-steel hover:text-ink"
                 }`}
               >
-                {label}
+                {statusLabel(value, locale)}
               </button>
             ))}
           </div>
         </div>
 
         <div className="mt-5">
-          <span className="mb-2 block text-[12px] text-steel">Теги</span>
+          <span className="mb-2 block text-[12px] text-steel">{t("dialog.tags")}</span>
           <div className="flex flex-wrap items-center gap-2">
             {tags.map((tag) => (
               <span
@@ -384,7 +386,7 @@ export function TaskDialog({
                 {tag}
                 <button
                   type="button"
-                  aria-label={`Убрать тег ${tag}`}
+                  aria-label={t("dialog.removeTagAria", { tag })}
                   onClick={() => void removeTag(tag)}
                   className="text-steel hover:text-ink"
                 >
@@ -402,8 +404,8 @@ export function TaskDialog({
                   void addTag();
                 }
               }}
-              placeholder="добавить тег"
-              aria-label="Новый тег"
+              placeholder={t("dialog.addTagPlaceholder")}
+              aria-label={t("dialog.tagAria")}
               className="min-w-[130px] border-b border-rule bg-transparent py-1 text-[13px] outline-none focus:border-signal"
             />
             <datalist id="tag-suggestions">
@@ -421,7 +423,7 @@ export function TaskDialog({
 
         <div className="mt-6">
           <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
-            <span>Чек-лист</span>
+            <span>{t("dialog.checklist")}</span>
             <span className="tabular-nums">
               {doneSubtasks} / {subtasks.length}
             </span>
@@ -456,7 +458,7 @@ export function TaskDialog({
                     onClick={() => void onDeleteSubtask(item.id)}
                     className="text-[12px] text-steel hover:text-ink"
                   >
-                    удалить
+                    {t("common.delete")}
                   </button>
                 </li>
               ))}
@@ -473,8 +475,8 @@ export function TaskDialog({
             <input
               value={subtaskDraft}
               onChange={(event) => setSubtaskDraft(event.target.value)}
-              placeholder="добавить пункт"
-              aria-label="Новый пункт чек-листа"
+              placeholder={t("dialog.addSubtaskPlaceholder")}
+              aria-label={t("dialog.newSubtaskAria")}
               className="w-full border-b border-rule bg-transparent py-1.5 text-[13px] outline-none focus:border-signal"
             />
             <button
@@ -482,14 +484,14 @@ export function TaskDialog({
               disabled={!subtaskDraft.trim() || subtaskBusy}
               className="shrink-0 text-[13px] text-ink hover:text-signal disabled:text-steel"
             >
-              добавить
+              {t("common.add")}
             </button>
           </form>
         </div>
 
         <div className="mt-6">
           <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
-            <span>Вложения</span>
+            <span>{t("dialog.attachments")}</span>
             <span className="tabular-nums">{attachments.length} / 10</span>
           </div>
 
@@ -508,14 +510,14 @@ export function TaskDialog({
                     {file.filename}
                   </a>
                   <span className="text-[11px] whitespace-nowrap text-steel tabular-nums">
-                    {formatBytes(file.size)}
+                    {formatBytes(file.size, locale)}
                   </span>
                   <button
                     type="button"
                     onClick={() => void onDeleteAttachment(file.id)}
                     className="text-[12px] text-steel hover:text-ink"
                   >
-                    удалить
+                    {t("common.delete")}
                   </button>
                 </li>
               ))}
@@ -526,7 +528,7 @@ export function TaskDialog({
             <span aria-hidden="true" className="font-display text-[16px] leading-none text-ink">
               +
             </span>
-            {uploadBusy ? "загружаю…" : "прикрепить файл"}
+            {uploadBusy ? t("dialog.uploading") : t("dialog.upload")}
             <input
               type="file"
               className="hidden"
@@ -538,12 +540,12 @@ export function TaskDialog({
               }}
             />
           </label>
-          <p className="mt-1 text-[11px] text-steel">любые файлы до 10 МБ, не больше 10 на задачу</p>
+          <p className="mt-1 text-[11px] text-steel">{t("dialog.filesHint")}</p>
         </div>
 
         <div className="mt-6">
           <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
-            <span>Комментарии</span>
+            <span>{t("dialog.comments")}</span>
             <span className="tabular-nums">{comments.length}</span>
           </div>
 
@@ -556,12 +558,12 @@ export function TaskDialog({
                       value={editingBody}
                       rows={3}
                       onChange={(event) => setEditingBody(event.target.value)}
-                      aria-label="Редактировать комментарий"
+                      aria-label={t("dialog.editCommentAria")}
                       className="w-full resize-y border border-rule bg-transparent p-2 text-[13px] outline-none focus:border-signal"
                     />
                     <div className="mt-1.5 flex gap-4 text-[12px]">
                       <button type="button" onClick={() => void saveComment()} className="text-ink">
-                        сохранить
+                        {t("common.save")}
                       </button>
                       <button
                         type="button"
@@ -571,14 +573,14 @@ export function TaskDialog({
                         }}
                         className="text-steel"
                       >
-                        отмена
+                        {t("common.cancel")}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div key={comment.id} className="border-l-2 border-rule pl-3">
                     <div className="flex flex-wrap items-baseline gap-3 text-[11px] text-steel">
-                      <span className="tabular-nums">{formatDateTime(comment.created_at)}</span>
+                      <span className="tabular-nums">{formatDateTime(comment.created_at, locale)}</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -587,14 +589,14 @@ export function TaskDialog({
                         }}
                         className="hover:text-ink"
                       >
-                        редактировать
+                        {t("dialog.edit")}
                       </button>
                       <button
                         type="button"
                         onClick={() => void onDeleteComment(comment.id)}
                         className="hover:text-ink"
                       >
-                        удалить
+                        {t("common.delete")}
                       </button>
                     </div>
                     <p className="mt-1 text-[14px] whitespace-pre-wrap">{comment.body}</p>
@@ -609,8 +611,8 @@ export function TaskDialog({
               value={commentDraft}
               rows={2}
               onChange={(event) => setCommentDraft(event.target.value)}
-              placeholder="написать комментарий"
-              aria-label="Новый комментарий"
+              placeholder={t("dialog.commentPlaceholder")}
+              aria-label={t("dialog.newCommentAria")}
               className="w-full resize-y bg-transparent text-[13px] outline-none"
             />
             <div className="mt-1 flex justify-end">
@@ -620,7 +622,7 @@ export function TaskDialog({
                 onClick={() => void addComment()}
                 className="text-[13px] text-ink hover:text-signal disabled:text-steel"
               >
-                отправить
+                {t("dialog.send")}
               </button>
             </div>
           </div>
@@ -635,12 +637,12 @@ export function TaskDialog({
               confirmDelete ? "text-signal hover:underline" : "text-steel hover:text-ink"
             }`}
           >
-            {confirmDelete ? "точно удалить?" : "удалить"}
+            {confirmDelete ? t("dialog.confirmDelete") : t("dialog.deleteAction")}
           </button>
 
           <div className="flex items-center gap-4">
             <button type="button" onClick={onClose} className="text-[13px] text-steel hover:text-ink">
-              отмена
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -648,7 +650,7 @@ export function TaskDialog({
               disabled={busy || !title.trim()}
               className="bg-ink px-4 py-2.5 text-[14px] text-paper transition-colors hover:bg-signal disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {busy ? "сохраняю…" : "сохранить"}
+              {busy ? t("dialog.saving") : t("dialog.saveAction")}
             </button>
           </div>
         </div>
