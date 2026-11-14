@@ -40,7 +40,7 @@ export default function LoginPage() {
         <Brand />
       </header>
 
-      <main className="flex-1 px-5 py-10 md:px-12 md:py-16">
+      <main className="flex flex-1 justify-center px-5 py-10 md:items-center md:px-12 md:py-16">
         <div className="w-full max-w-[360px]">
           <h1 className="font-display text-[32px] font-semibold tracking-[-0.02em]">Вход</h1>
           <p className="mt-1.5 text-[13px] text-steel">Одна учётная запись — своя доска.</p>
