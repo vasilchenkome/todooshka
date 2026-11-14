@@ -1,5 +1,7 @@
-use argon2::password_hash::{PasswordHash as ArgonHash, SaltString};
-use argon2::{Argon2, PasswordHasher as Argon2Hasher, PasswordVerifier};
+use argon2::Argon2;
+use argon2::password_hash::{
+    PasswordHasher as Argon2Hasher, PasswordVerifier, phc::PasswordHash as ArgonHash,
+};
 use rand_core::{OsRng, RngCore};
 use sha2::{Digest, Sha256};
 
@@ -11,9 +13,8 @@ pub struct Argon2PasswordHasher;
 
 impl PasswordHasher for Argon2PasswordHasher {
     fn hash(&self, password: &str) -> Result<PasswordHash, RepositoryError> {
-        let salt = SaltString::generate(&mut OsRng);
         let hashed = Argon2::default()
-            .hash_password(password.as_bytes(), &salt)
+            .hash_password(password.as_bytes())
             .map_err(|error| RepositoryError::Unavailable(format!("argon2: {error}")))?;
 
         PasswordHash::parse(hashed.to_string().as_str())
