@@ -12,14 +12,13 @@ export function AppBar({ left }: AppBarProps) {
   const { user, logout } = useAuth();
 
   return (
-    <header className="flex h-[60px] items-center gap-6 border-b border-ink px-5 md:px-7">
-      <div className="flex h-6 items-center md:border-r md:border-rule md:pr-6">
+    <header className="flex h-[60px] items-center gap-3 border-b border-ink px-4 sm:gap-6 sm:px-5 md:px-7">
+      <div className="flex h-6 shrink-0 items-center md:border-r md:border-rule md:pr-6">
         <Brand />
       </div>
-      {left}
-      <div className="flex-1" />
-      <div className="flex items-center gap-3 text-[13px] text-steel">
-        <span className="text-ink">{user?.username}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-6">{left}</div>
+      <div className="flex shrink-0 items-center gap-3 text-[13px] text-steel">
+        <span className="hidden text-ink sm:inline">{user?.username}</span>
         <button
           type="button"
           onClick={() => void logout()}

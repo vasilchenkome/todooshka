@@ -7,8 +7,8 @@ export function Brand() {
       to="/"
       className="flex items-center font-display text-base font-semibold tracking-[-0.01em]"
     >
-      <span aria-hidden="true" className="mr-2 h-2 w-2 bg-signal" />
-      todooshka
+      <span aria-hidden="true" className="mr-0 h-2 w-2 bg-signal sm:mr-2" />
+      <span className="hidden sm:inline">todooshka</span>
     </Link>
   );
 }

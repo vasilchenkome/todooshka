@@ -154,11 +154,12 @@ export default function BoardPage() {
           <>
             <Link
               to="/"
-              className="border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
+              aria-label="К проектам"
+              className="shrink-0 border-b border-transparent pb-px text-[13px] text-steel transition-colors hover:border-rule hover:text-ink"
             >
-              ← проекты
+              ←<span className="hidden sm:inline"> проекты</span>
             </Link>
-            <h1 className="font-display text-[18px] font-semibold tracking-[-0.01em]">
+            <h1 className="min-w-0 truncate font-display text-[18px] font-semibold tracking-[-0.01em]">
               {project?.name ?? "Доска"}
             </h1>
           </>

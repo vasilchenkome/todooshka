@@ -71,7 +71,7 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
         role="dialog"
         aria-modal="true"
         aria-label="Задача"
-        className="w-full max-w-[560px] border border-ink bg-paper p-5 md:p-7"
+        className="max-h-[92dvh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-ink bg-paper p-5 md:max-h-[85dvh] md:p-7"
       >
         <div className="mb-6 flex items-center justify-between gap-4">
           <span className="text-[12px] text-steel tabular-nums">
@@ -85,7 +85,6 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
         <label className="block">
           <span className="mb-1 block text-[12px] text-steel">Заголовок</span>
           <input
-            autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="w-full border-b border-rule bg-transparent pb-2 font-display text-[20px] font-semibold tracking-[-0.01em] outline-none focus:border-signal"
@@ -96,7 +95,7 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
           <span className="mb-1 block text-[12px] text-steel">Описание</span>
           <textarea
             value={description}
-            rows={5}
+            rows={4}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="детали, ссылки, что учесть"
             className="w-full resize-y border border-rule bg-transparent p-3 text-[14px] outline-none focus:border-signal"
