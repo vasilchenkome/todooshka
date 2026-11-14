@@ -27,7 +27,7 @@ async fn migrations_create_mvp_schema() {
     assert_eq!(
         tables,
         vec!["_sqlx_migrations", "projects", "sessions", "tasks", "users"],
-        "схема MVP должна совпадать с миграцией 0001"
+        "таблицы должны совпадать с миграциями 0001 и 0002"
     );
 }
 
@@ -47,9 +47,26 @@ async fn migrate_twice_is_safe() {
         .expect("таблица миграций читается");
 
     assert_eq!(
-        applied, 1,
-        "миграция 0001 должна примениться ровно один раз"
+        applied, 2,
+        "каждая миграция должна примениться ровно один раз"
     );
+}
+
+#[tokio::test]
+async fn planning_columns_exist_with_defaults() {
+    let dir = tempfile::tempdir().expect("временная папка");
+    let pool = open(&dir).await;
+    migrate(&pool).await.expect("миграции применяются");
+
+    let columns: Vec<String> =
+        sqlx::query_scalar("SELECT name FROM pragma_table_info('tasks') ORDER BY cid")
+            .fetch_all(&pool)
+            .await
+            .expect("колонки читаются");
+
+    for column in ["due_on", "priority", "estimate_minutes"] {
+        assert!(columns.contains(&column.to_owned()), "нет колонки {column}");
+    }
 }
 
 #[tokio::test]

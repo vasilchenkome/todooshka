@@ -58,6 +58,16 @@ struct ErrorDetail {
     message: String,
 }
 
+impl From<todooshka_domain::DomainError> for ApiError {
+    fn from(error: todooshka_domain::DomainError) -> Self {
+        Self::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "validation_failed",
+            error.to_string(),
+        )
+    }
+}
+
 impl From<ApplicationError> for ApiError {
     fn from(error: ApplicationError) -> Self {
         match error {

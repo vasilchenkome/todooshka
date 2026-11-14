@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 use todooshka_app::{ProjectTaskCount, RepositoryError, TaskStore, TaskTransaction};
 use todooshka_domain::{
-    ProjectId, Task, TaskDraft, TaskId, TaskSnapshot, TaskStatus, TaskTitle, Timestamp,
+    DueDate, EstimateMinutes, Planning, Priority, ProjectId, Task, TaskDraft, TaskId, TaskSnapshot,
+    TaskStatus, TaskTitle, Timestamp,
 };
 
 use crate::mapping::{corrupted, unavailable};
@@ -30,6 +31,9 @@ struct TaskRow {
     created_at: i64,
     updated_at: i64,
     completed_at: Option<i64>,
+    due_on: Option<String>,
+    priority: String,
+    estimate_minutes: Option<i64>,
 }
 
 impl TaskRow {
@@ -37,6 +41,20 @@ impl TaskRow {
         let status = TaskStatus::from_code(&self.status).ok_or_else(|| {
             RepositoryError::Corrupted(format!("неизвестный статус задачи {:?}", self.status))
         })?;
+        let priority = Priority::from_code(&self.priority).ok_or_else(|| {
+            RepositoryError::Corrupted(format!("неизвестный приоритет задачи {:?}", self.priority))
+        })?;
+        let due_on = self
+            .due_on
+            .as_deref()
+            .map(DueDate::parse)
+            .transpose()
+            .map_err(corrupted)?;
+        let estimate = self
+            .estimate_minutes
+            .map(EstimateMinutes::parse)
+            .transpose()
+            .map_err(corrupted)?;
 
         let snapshot = TaskSnapshot {
             id: TaskId::from_raw(self.id),
@@ -48,6 +66,7 @@ impl TaskRow {
             created_at: Timestamp::from_unix_seconds(self.created_at),
             updated_at: Timestamp::from_unix_seconds(self.updated_at),
             completed_at: self.completed_at.map(Timestamp::from_unix_seconds),
+            planning: Planning::new(due_on, priority, estimate),
         };
 
         Task::restore(snapshot).map_err(corrupted)
@@ -59,7 +78,7 @@ impl TaskStore for SqliteTasks {
     async fn list_by_project(&self, project_id: ProjectId) -> Result<Vec<Task>, RepositoryError> {
         let rows: Vec<TaskRow> = sqlx::query_as(
             "SELECT id, project_id, title, description, status, position,
-                    created_at, updated_at, completed_at
+                    created_at, updated_at, completed_at, due_on, priority, estimate_minutes
              FROM tasks
              WHERE project_id = ?1
              ORDER BY position ASC, id ASC",
@@ -143,7 +162,7 @@ impl TaskTransaction for SqliteTaskTransaction {
     ) -> Result<Vec<Task>, RepositoryError> {
         let rows: Vec<TaskRow> = sqlx::query_as(
             "SELECT id, project_id, title, description, status, position,
-                    created_at, updated_at, completed_at
+                    created_at, updated_at, completed_at, due_on, priority, estimate_minutes
              FROM tasks
              WHERE project_id = ?1 AND status = ?2
              ORDER BY position ASC, id ASC",
@@ -160,7 +179,7 @@ impl TaskTransaction for SqliteTaskTransaction {
     async fn get(&mut self, id: TaskId) -> Result<Option<Task>, RepositoryError> {
         let row: Option<TaskRow> = sqlx::query_as(
             "SELECT id, project_id, title, description, status, position,
-                    created_at, updated_at, completed_at
+                    created_at, updated_at, completed_at, due_on, priority, estimate_minutes
              FROM tasks
              WHERE id = ?1",
         )
@@ -194,7 +213,7 @@ impl TaskTransaction for SqliteTaskTransaction {
                 ?5, ?5, ?6
              )
              RETURNING id, project_id, title, description, status, position,
-                       created_at, updated_at, completed_at",
+                       created_at, updated_at, completed_at, due_on, priority, estimate_minutes",
         )
         .bind(project_id.as_raw())
         .bind(draft.title().as_str())
@@ -213,8 +232,9 @@ impl TaskTransaction for SqliteTaskTransaction {
         let result = sqlx::query(
             "UPDATE tasks
              SET title = ?1, description = ?2, status = ?3, position = ?4,
-                 updated_at = ?5, completed_at = ?6
-             WHERE id = ?7",
+                 updated_at = ?5, completed_at = ?6, due_on = ?7, priority = ?8,
+                 estimate_minutes = ?9
+             WHERE id = ?10",
         )
         .bind(task.title().as_str())
         .bind(task.description())
@@ -222,6 +242,9 @@ impl TaskTransaction for SqliteTaskTransaction {
         .bind(task.position())
         .bind(task.updated_at().as_unix_seconds())
         .bind(task.completed_at().map(Timestamp::as_unix_seconds))
+        .bind(task.planning().due_on().map(DueDate::as_str))
+        .bind(task.planning().priority().as_code())
+        .bind(task.planning().estimate().map(EstimateMinutes::as_minutes))
         .bind(task.id().as_raw())
         .execute(&mut **self.tx()?)
         .await

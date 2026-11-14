@@ -1,4 +1,5 @@
 use crate::error::DomainError;
+use crate::planning::Planning;
 use crate::project::ProjectId;
 use crate::time::Timestamp;
 
@@ -127,6 +128,7 @@ pub struct TaskSnapshot {
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub completed_at: Option<Timestamp>,
+    pub planning: Planning,
 }
 
 /// Задача на доске: принадлежит проекту, живёт в колонке с дробной позицией.
@@ -141,6 +143,7 @@ pub struct Task {
     created_at: Timestamp,
     updated_at: Timestamp,
     completed_at: Option<Timestamp>,
+    planning: Planning,
 }
 
 impl Task {
@@ -164,6 +167,7 @@ impl Task {
             created_at: now,
             updated_at: now,
             completed_at: status.is_done().then_some(now),
+            planning: Planning::default(),
         })
     }
 
@@ -186,6 +190,7 @@ impl Task {
             created_at: snapshot.created_at,
             updated_at: snapshot.updated_at,
             completed_at: snapshot.completed_at,
+            planning: snapshot.planning,
         })
     }
 
@@ -198,6 +203,11 @@ impl Task {
         self.description = validate_description(description)?;
         self.updated_at = now;
         Ok(())
+    }
+
+    pub fn plan(&mut self, planning: Planning, now: Timestamp) {
+        self.planning = planning;
+        self.updated_at = now;
     }
 
     /// Перенос между колонками и внутри колонки одним действием.
@@ -267,6 +277,10 @@ impl Task {
 
     pub fn completed_at(&self) -> Option<Timestamp> {
         self.completed_at
+    }
+
+    pub fn planning(&self) -> &Planning {
+        &self.planning
     }
 }
 
@@ -417,11 +431,55 @@ mod tests {
             created_at: now(100),
             updated_at: now(100),
             completed_at: None,
+            planning: Planning::default(),
         };
 
         assert_eq!(
             Task::restore(snapshot).expect_err("расхождение недопустимо"),
             DomainError::TaskCompletionInconsistent
+        );
+    }
+
+    #[test]
+    fn planning_changes_touch_updated_at_and_keep_status() {
+        let mut task = task(TaskStatus::Backlog);
+        let planning = Planning::new(
+            Some(crate::DueDate::parse("2026-11-20").expect("дата")),
+            crate::Priority::High,
+            Some(crate::EstimateMinutes::parse(90).expect("оценка")),
+        );
+
+        task.plan(planning.clone(), now(400));
+
+        assert_eq!(task.planning(), &planning);
+        assert_eq!(task.updated_at(), now(400));
+        assert_eq!(task.completed_at(), None);
+        assert_eq!(task.status(), TaskStatus::Backlog);
+    }
+
+    #[test]
+    fn restore_keeps_planning() {
+        let planning = Planning::new(
+            Some(crate::DueDate::parse("2026-12-01").expect("дата")),
+            crate::Priority::Urgent,
+            None,
+        );
+        let snapshot = TaskSnapshot {
+            id: TaskId::from_raw(1),
+            project_id: ProjectId::from_raw(10),
+            title: TaskTitle::parse("Задача").expect("заголовок"),
+            description: String::new(),
+            status: TaskStatus::Backlog,
+            position: 1.0,
+            created_at: now(100),
+            updated_at: now(100),
+            completed_at: None,
+            planning: planning.clone(),
+        };
+
+        assert_eq!(
+            Task::restore(snapshot).expect("восстановление").planning(),
+            &planning
         );
     }
 

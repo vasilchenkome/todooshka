@@ -45,12 +45,18 @@ pub async fn update(
     Path(id): Path<i64>,
     Json(request): Json<EditTaskRequest>,
 ) -> Result<Json<TaskDto>, ApiError> {
+    let planning = request
+        .planning
+        .map(crate::dto::PlanningRequest::parse)
+        .transpose()?;
+
     let task = state
         .tasks
         .edit(EditTask {
             id: TaskId::from_raw(id),
             title: request.title,
             description: request.description,
+            planning,
         })
         .await?;
 

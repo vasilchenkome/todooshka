@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use todooshka_domain::{Project, Task};
+use todooshka_domain::{DueDate, EstimateMinutes, Planning, Priority, Project, Task};
 
 /// Проект на проводе: плоские поля, время в unix-секундах. Домен сюда не протекает.
 #[derive(Debug, Serialize)]
@@ -84,6 +84,9 @@ pub struct TaskDto {
     pub created_at: i64,
     pub updated_at: i64,
     pub completed_at: Option<i64>,
+    pub due_on: Option<String>,
+    pub priority: &'static str,
+    pub estimate_minutes: Option<i64>,
 }
 
 impl From<&Task> for TaskDto {
@@ -98,6 +101,12 @@ impl From<&Task> for TaskDto {
             created_at: task.created_at().as_unix_seconds(),
             updated_at: task.updated_at().as_unix_seconds(),
             completed_at: task.completed_at().map(|time| time.as_unix_seconds()),
+            due_on: task
+                .planning()
+                .due_on()
+                .map(|date| date.as_str().to_owned()),
+            priority: task.planning().priority().as_code(),
+            estimate_minutes: task.planning().estimate().map(EstimateMinutes::as_minutes),
         }
     }
 }
@@ -117,6 +126,32 @@ pub struct EditTaskRequest {
     pub title: Option<String>,
     #[serde(default)]
     pub description: Option<String>,
+    #[serde(default)]
+    pub planning: Option<PlanningRequest>,
+}
+
+/// Планирование в PATCH: объект присутствует — набор заменяется целиком.
+#[derive(Debug, Deserialize)]
+pub struct PlanningRequest {
+    #[serde(default)]
+    pub due_on: Option<String>,
+    pub priority: String,
+    #[serde(default)]
+    pub estimate_minutes: Option<i64>,
+}
+
+impl PlanningRequest {
+    pub fn parse(self) -> Result<Planning, todooshka_domain::DomainError> {
+        let due_on = self.due_on.as_deref().map(DueDate::parse).transpose()?;
+        let priority = Priority::from_code(&self.priority)
+            .ok_or_else(|| todooshka_domain::DomainError::InvalidPriority(self.priority.clone()))?;
+        let estimate = self
+            .estimate_minutes
+            .map(EstimateMinutes::parse)
+            .transpose()?;
+
+        Ok(Planning::new(due_on, priority, estimate))
+    }
 }
 
 #[derive(Debug, Deserialize)]

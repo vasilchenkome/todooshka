@@ -7,7 +7,8 @@ use todooshka_app::{
     RepositoryError, TaskService, TaskStore, TaskTransaction,
 };
 use todooshka_domain::{
-    DomainError, Project, ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp,
+    DomainError, DueDate, EstimateMinutes, Planning, Priority, Project, ProjectDraft, ProjectId,
+    Task, TaskDraft, TaskId, TaskStatus, Timestamp,
 };
 
 fn now(seconds: i64) -> Timestamp {
@@ -478,6 +479,7 @@ async fn edit_updates_title_and_description() {
             id: task.id(),
             title: Some("  Новая  ".to_owned()),
             description: Some("подробности".to_owned()),
+            planning: None,
         })
         .await
         .expect("правка проходит");
@@ -503,6 +505,7 @@ async fn edit_with_invalid_title_changes_nothing() {
             id: task.id(),
             title: Some("   ".to_owned()),
             description: Some("подробности".to_owned()),
+            planning: None,
         })
         .await
         .expect_err("пустой заголовок недопустим");
@@ -526,4 +529,80 @@ async fn delete_removes_task_and_reports_missing() {
         .await
         .expect_err("второе удаление не проходит");
     assert_eq!(error, ApplicationError::TaskNotFound(task.id()));
+}
+
+#[tokio::test]
+async fn edit_replaces_planning_and_persists_it() {
+    let h = harness();
+    let task = add(&h, "Задача", TaskStatus::Backlog).await;
+    h.clock.set(300);
+
+    let planning = Planning::new(
+        Some(DueDate::parse("2026-11-20").expect("дата")),
+        Priority::High,
+        Some(EstimateMinutes::parse(45).expect("оценка")),
+    );
+
+    let edited = h
+        .service
+        .edit(EditTask {
+            id: task.id(),
+            title: None,
+            description: None,
+            planning: Some(planning.clone()),
+        })
+        .await
+        .expect("планирование сохраняется");
+
+    assert_eq!(edited.planning(), &planning);
+    assert_eq!(edited.updated_at(), now(300));
+    assert_eq!(h.tasks.stored()[0].planning(), &planning);
+
+    let cleared = h
+        .service
+        .edit(EditTask {
+            id: task.id(),
+            title: None,
+            description: None,
+            planning: Some(Planning::new(None, Priority::Normal, None)),
+        })
+        .await
+        .expect("планирование очищается");
+
+    assert!(cleared.planning().due_on().is_none());
+    assert!(cleared.planning().estimate().is_none());
+    assert_eq!(cleared.planning().priority(), Priority::Normal);
+}
+
+#[tokio::test]
+async fn edit_without_planning_keeps_it() {
+    let h = harness();
+    let task = add(&h, "Задача", TaskStatus::Backlog).await;
+    let planning = Planning::new(
+        Some(DueDate::parse("2026-12-01").expect("дата")),
+        Priority::Urgent,
+        None,
+    );
+    h.service
+        .edit(EditTask {
+            id: task.id(),
+            title: None,
+            description: None,
+            planning: Some(planning.clone()),
+        })
+        .await
+        .expect("планирование сохраняется");
+
+    let edited = h
+        .service
+        .edit(EditTask {
+            id: task.id(),
+            title: Some("Новое имя".to_owned()),
+            description: None,
+            planning: None,
+        })
+        .await
+        .expect("правка заголовка");
+
+    assert_eq!(edited.planning(), &planning);
 }

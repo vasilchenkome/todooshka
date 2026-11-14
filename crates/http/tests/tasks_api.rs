@@ -278,3 +278,142 @@ async fn tasks_require_session() {
     assert_eq!(status, StatusCode::UNAUTHORIZED);
     assert_eq!(body["error"]["code"], "unauthorized");
 }
+
+#[tokio::test]
+async fn new_task_has_default_planning_fields() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    let task_id = create_task(&app, project_id, "Задача", None).await;
+
+    let (status, body) = request(
+        &app,
+        Method::GET,
+        &format!("/api/projects/{project_id}/tasks"),
+        None,
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let task = body
+        .as_array()
+        .expect("массив задач")
+        .iter()
+        .find(|task| task["id"].as_i64() == Some(task_id))
+        .expect("задача в списке");
+    assert!(task["due_on"].is_null());
+    assert_eq!(task["priority"], "normal");
+    assert!(task["estimate_minutes"].is_null());
+}
+
+#[tokio::test]
+async fn patch_planning_sets_and_clears_fields() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    let task_id = create_task(&app, project_id, "Задача", None).await;
+
+    let (status, body) = request(
+        &app,
+        Method::PATCH,
+        &format!("/api/tasks/{task_id}"),
+        Some(json!({
+            "planning": {
+                "due_on": "2026-11-20",
+                "priority": "urgent",
+                "estimate_minutes": 90
+            }
+        })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["due_on"], "2026-11-20");
+    assert_eq!(body["priority"], "urgent");
+    assert_eq!(body["estimate_minutes"], 90);
+
+    let (status, body) = request(
+        &app,
+        Method::PATCH,
+        &format!("/api/tasks/{task_id}"),
+        Some(json!({
+            "planning": { "due_on": null, "priority": "normal", "estimate_minutes": null }
+        })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(body["due_on"].is_null());
+    assert_eq!(body["priority"], "normal");
+    assert!(body["estimate_minutes"].is_null());
+}
+
+#[tokio::test]
+async fn patch_without_planning_keeps_it() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    let task_id = create_task(&app, project_id, "Задача", None).await;
+
+    request(
+        &app,
+        Method::PATCH,
+        &format!("/api/tasks/{task_id}"),
+        Some(json!({ "planning": { "due_on": "2026-12-01", "priority": "high" } })),
+    )
+    .await;
+
+    let (status, body) = request(
+        &app,
+        Method::PATCH,
+        &format!("/api/tasks/{task_id}"),
+        Some(json!({ "title": "Новое имя" })),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["title"], "Новое имя");
+    assert_eq!(body["due_on"], "2026-12-01");
+    assert_eq!(body["priority"], "high");
+}
+
+#[tokio::test]
+async fn invalid_planning_is_validation_error() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    let task_id = create_task(&app, project_id, "Задача", None).await;
+
+    for planning in [
+        json!({ "due_on": "2026-02-30", "priority": "normal" }),
+        json!({ "priority": "critical" }),
+        json!({ "priority": "normal", "estimate_minutes": 0 }),
+        json!({ "priority": "normal", "estimate_minutes": 100001 }),
+    ] {
+        let (status, body) = request(
+            &app,
+            Method::PATCH,
+            &format!("/api/tasks/{task_id}"),
+            Some(json!({ "planning": planning })),
+        )
+        .await;
+
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{body}");
+        assert_eq!(body["error"]["code"], "validation_failed");
+    }
+}
+
+#[tokio::test]
+async fn empty_patch_returns_task_unchanged() {
+    let app = app().await;
+    let project_id = create_project(&app).await;
+    let task_id = create_task(&app, project_id, "Задача", None).await;
+
+    let (status, body) = request(
+        &app,
+        Method::PATCH,
+        &format!("/api/tasks/{task_id}"),
+        Some(json!({})),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["title"], "Задача");
+    assert_eq!(body["priority"], "normal");
+}

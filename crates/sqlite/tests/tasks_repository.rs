@@ -1,7 +1,10 @@
 use sqlx::SqlitePool;
 use tempfile::TempDir;
 use todooshka_app::{ProjectRepository, RepositoryError, TaskStore};
-use todooshka_domain::{ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp};
+use todooshka_domain::{
+    DueDate, EstimateMinutes, Planning, Priority, ProjectDraft, ProjectId, Task, TaskDraft, TaskId,
+    TaskStatus, Timestamp,
+};
 use todooshka_sqlite::{SqliteProjects, SqliteTasks, connect, migrate};
 
 struct Db {
@@ -281,4 +284,49 @@ async fn list_column_isolates_project_and_status() {
 
     assert_eq!(column.len(), 1);
     assert_eq!(column[0].title().as_str(), "Бэклог первого");
+}
+
+#[tokio::test]
+async fn planning_roundtrips_through_sqlite() {
+    let db = db().await;
+    let project_id = project(&db, "Проект").await;
+    let task = add(&db, project_id, "Задача", TaskStatus::Backlog).await;
+
+    let planning = Planning::new(
+        Some(DueDate::parse("2026-11-20").expect("дата")),
+        Priority::Urgent,
+        Some(EstimateMinutes::parse(90).expect("оценка")),
+    );
+
+    let mut transaction = db.tasks.transaction().await.expect("транзакция");
+    let mut stored = transaction
+        .get(task.id())
+        .await
+        .expect("чтение")
+        .expect("задача есть");
+    stored.plan(planning.clone(), now(200));
+    transaction.save(&stored).await.expect("запись");
+    transaction.commit().await.expect("коммит");
+
+    let mut check = db.tasks.transaction().await.expect("транзакция");
+    let reloaded = check
+        .get(task.id())
+        .await
+        .expect("чтение")
+        .expect("задача есть");
+
+    assert_eq!(reloaded.planning(), &planning);
+    assert_eq!(reloaded.updated_at(), now(200));
+}
+
+#[tokio::test]
+async fn new_task_has_default_planning() {
+    let db = db().await;
+    let project_id = project(&db, "Проект").await;
+    let task = add(&db, project_id, "Задача", TaskStatus::Backlog).await;
+
+    assert_eq!(task.planning(), &Planning::default());
+    assert_eq!(task.planning().priority(), Priority::Normal);
+    assert!(task.planning().due_on().is_none());
+    assert!(task.planning().estimate().is_none());
 }

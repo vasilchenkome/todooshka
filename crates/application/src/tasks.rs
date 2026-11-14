@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use todooshka_domain::{
-    ProjectId, Task, TaskDraft, TaskId, TaskStatus, TaskTitle, between, evenly,
+    Planning, ProjectId, Task, TaskDraft, TaskId, TaskStatus, TaskTitle, between, evenly,
 };
 
 use crate::error::ApplicationError;
@@ -22,6 +22,7 @@ pub struct EditTask {
     pub id: TaskId,
     pub title: Option<String>,
     pub description: Option<String>,
+    pub planning: Option<Planning>,
 }
 
 /// Перенести задачу в колонку на нужное место (индекс в колонке, 0 — начало).
@@ -109,6 +110,13 @@ impl TaskService {
             && description != task.description()
         {
             task.describe(description, now)?;
+            changed = true;
+        }
+
+        if let Some(planning) = command.planning
+            && &planning != task.planning()
+        {
+            task.plan(planning, now);
             changed = true;
         }
 

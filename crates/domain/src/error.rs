@@ -25,6 +25,15 @@ pub enum DomainError {
     #[error("позиция задачи должна быть конечным числом")]
     InvalidTaskPosition,
 
+    #[error("срок должен быть реальной датой в формате ГГГГ-ММ-ДД, получено {0:?}")]
+    InvalidDueDate(String),
+
+    #[error("оценка должна быть от 1 до 100000 минут")]
+    InvalidEstimateMinutes,
+
+    #[error("неизвестный приоритет: {0:?}")]
+    InvalidPriority(String),
+
     #[error("статус задачи и время завершения не согласованы")]
     TaskCompletionInconsistent,
 
