@@ -16,11 +16,11 @@ use std::time::Duration;
 use async_trait::async_trait;
 use sqlx::SqlitePool;
 use todooshka_app::{
-    AuthService, ChangePassword, Clock, CreateUser, ProjectRepository, ProjectService, TaskService,
-    TaskStore,
+    AuthService, ChangePassword, Clock, CreateUser, ProjectRepository, ProjectService,
+    SubtaskService, TaskService, TaskStore,
 };
 use todooshka_http::{AppState, ReadinessProbe, auth::LoginLimiter};
-use todooshka_sqlite::{SqliteProjects, SqliteSessions, SqliteTasks, SqliteUsers};
+use todooshka_sqlite::{SqliteProjects, SqliteSessions, SqliteSubtasks, SqliteTasks, SqliteUsers};
 
 use crate::clock::SystemClock;
 use crate::security::{Argon2PasswordHasher, RandomSessionTokens};
@@ -136,6 +136,10 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
         projects_repository,
         Arc::clone(&clock),
     ));
+    let subtasks = Arc::new(SubtaskService::new(
+        Arc::new(SqliteSubtasks::new(pool.clone())),
+        Arc::clone(&clock),
+    ));
     let auth = Arc::new(AuthService::new(
         Arc::new(SqliteUsers::new(pool.clone())),
         Arc::new(SqliteSessions::new(pool.clone())),
@@ -147,6 +151,7 @@ async fn run_server() -> Result<(), Box<dyn Error>> {
     let state = AppState {
         projects,
         tasks,
+        subtasks,
         auth,
         login_limiter: LoginLimiter::default(),
         cookie_secure: config::cookie_secure(),

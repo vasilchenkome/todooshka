@@ -8,6 +8,7 @@ type TaskCardProps = {
   task: Task;
   number: number;
   onOpen: (task: Task) => void;
+  subtasks?: { done: number; total: number };
 };
 
 const PRIORITY_DOT: Record<Task["priority"], string> = {
@@ -25,7 +26,7 @@ const PRIORITY_TEXT: Record<Task["priority"], string> = {
 };
 
 /** Карточка задачи: строка, а не «облако»; номер и дата — табличными цифрами. */
-export function TaskCard({ task, number, onOpen }: TaskCardProps) {
+export function TaskCard({ task, number, onOpen, subtasks }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -69,6 +70,11 @@ export function TaskCard({ task, number, onOpen }: TaskCardProps) {
         </button>
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
           <span className={`tabular-nums ${dueClass}`}>{due.text}</span>
+          {subtasks && subtasks.total > 0 && (
+            <span className="whitespace-nowrap tabular-nums">
+              чек-лист {subtasks.done}/{subtasks.total}
+            </span>
+          )}
           {task.priority !== "normal" && (
             <span
               className={`ml-auto flex items-center gap-1.5 whitespace-nowrap ${PRIORITY_TEXT[task.priority]}`}

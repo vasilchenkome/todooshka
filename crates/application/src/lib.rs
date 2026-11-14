@@ -7,6 +7,7 @@ mod auth;
 mod error;
 mod ports;
 mod projects;
+mod subtasks;
 mod tasks;
 
 pub use auth::{
@@ -16,7 +17,8 @@ pub use auth::{
 pub use error::{ApplicationError, RepositoryError};
 pub use ports::{
     Clock, PasswordHasher, ProjectRepository, ProjectTaskCount, SessionStore, SessionTokens,
-    StoredSession, TaskStore, TaskTransaction, UserStore,
+    StoredSession, SubtaskStore, TaskStore, TaskTransaction, UserStore,
 };
 pub use projects::{CreateProject, ProjectService, UpdateProject};
+pub use subtasks::SubtaskService;
 pub use tasks::{AddTask, EditTask, MoveTask, TaskService};

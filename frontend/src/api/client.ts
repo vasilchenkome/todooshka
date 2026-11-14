@@ -3,6 +3,8 @@ import {
   loginResponseSchema,
   projectListSchema,
   projectSchema,
+  subtaskListSchema,
+  subtaskSchema,
   taskListSchema,
   taskSchema,
   userSchema,
@@ -10,6 +12,7 @@ import {
   type Project,
   type ProjectInput,
   type ProjectPatch,
+  type Subtask,
   type Task,
   type TaskPatch,
   type TaskStatus,
@@ -114,4 +117,29 @@ export const api = {
 
   deleteTask: (id: number): Promise<void> =>
     request(`/api/tasks/${id}`, { method: "DELETE" }, () => undefined),
+
+  listSubtasks: (projectId: number): Promise<Subtask[]> =>
+    request(`/api/projects/${projectId}/subtasks`, { method: "GET" }, (data) =>
+      subtaskListSchema.parse(data),
+    ),
+
+  createSubtask: (taskId: number, title: string): Promise<Subtask> =>
+    request(
+      `/api/tasks/${taskId}/subtasks`,
+      { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ title }) },
+      (data) => subtaskSchema.parse(data),
+    ),
+
+  updateSubtask: (
+    id: number,
+    patch: { title?: string; done?: boolean },
+  ): Promise<Subtask> =>
+    request(
+      `/api/subtasks/${id}`,
+      { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(patch) },
+      (data) => subtaskSchema.parse(data),
+    ),
+
+  deleteSubtask: (id: number): Promise<void> =>
+    request(`/api/subtasks/${id}`, { method: "DELETE" }, () => undefined),
 };

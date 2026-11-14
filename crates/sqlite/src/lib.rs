@@ -9,6 +9,7 @@ mod migrations;
 mod pool;
 mod projects;
 mod sessions;
+mod subtasks;
 mod tasks;
 mod users;
 
@@ -18,5 +19,6 @@ pub use migrations::{migrate, migrator};
 pub use pool::connect;
 pub use projects::SqliteProjects;
 pub use sessions::SqliteSessions;
+pub use subtasks::SqliteSubtasks;
 pub use tasks::SqliteTasks;
 pub use users::SqliteUsers;

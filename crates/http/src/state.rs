@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use todooshka_app::{AuthService, ProjectService, TaskService};
+use todooshka_app::{AuthService, ProjectService, SubtaskService, TaskService};
 
 use crate::auth::LoginLimiter;
 
@@ -16,6 +16,7 @@ pub trait ReadinessProbe: Send + Sync {
 pub struct AppState {
     pub projects: Arc<ProjectService>,
     pub tasks: Arc<TaskService>,
+    pub subtasks: Arc<SubtaskService>,
     pub auth: Arc<AuthService>,
     pub login_limiter: LoginLimiter,
     /// Флаг `Secure` у cookie: включается только когда приложение за HTTPS.

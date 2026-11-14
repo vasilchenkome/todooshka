@@ -11,6 +11,7 @@ type BoardColumnProps = {
   title: string;
   tasks: Task[];
   numbers: Map<number, number>;
+  subtasks: Map<number, { done: number; total: number }>;
   accent?: boolean;
   activeOnMobile: boolean;
   creating: boolean;
@@ -25,6 +26,7 @@ export function BoardColumn({
   title,
   tasks,
   numbers,
+  subtasks,
   accent = false,
   activeOnMobile,
   creating,
@@ -89,6 +91,7 @@ export function BoardColumn({
               key={task.id}
               task={task}
               number={numbers.get(task.id) ?? task.id}
+              subtasks={subtasks.get(task.id)}
               onOpen={onOpenTask}
             />
           ))}

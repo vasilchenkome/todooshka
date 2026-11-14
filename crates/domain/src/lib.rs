@@ -7,6 +7,7 @@ mod error;
 mod ordering;
 mod planning;
 mod project;
+mod subtask;
 mod task;
 mod time;
 mod user;
@@ -18,6 +19,7 @@ pub use project::{
     DEFAULT_PROJECT_COLOR, MAX_PROJECT_DESCRIPTION_CHARS, MAX_PROJECT_NAME_CHARS, Project,
     ProjectColor, ProjectDraft, ProjectId, ProjectName, ProjectSnapshot,
 };
+pub use subtask::{MAX_SUBTASK_TITLE_CHARS, Subtask, SubtaskId, SubtaskSnapshot, SubtaskTitle};
 pub use task::{
     MAX_TASK_DESCRIPTION_CHARS, MAX_TASK_TITLE_CHARS, Task, TaskDraft, TaskId, TaskSnapshot,
     TaskStatus, TaskTitle,

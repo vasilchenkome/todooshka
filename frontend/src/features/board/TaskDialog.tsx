@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { Task, TaskPlanning, TaskPriority, TaskStatus } from "../../api/types";
+import type { Subtask, Task, TaskPlanning, TaskPriority, TaskStatus } from "../../api/types";
 import { BOARD_COLUMNS, PRIORITY_LABELS, estimateLabel } from "./boardModel";
 
 const PRIORITIES: TaskPriority[] = ["low", "normal", "high", "urgent"];
@@ -12,10 +12,25 @@ type TaskDialogProps = {
   onSave: (patch: { title: string; description: string; planning: TaskPlanning }) => Promise<void>;
   onMove: (status: TaskStatus) => Promise<void>;
   onDelete: () => Promise<void>;
+  subtasks: Subtask[];
+  onCreateSubtask: (title: string) => Promise<void>;
+  onToggleSubtask: (id: number, done: boolean) => Promise<void>;
+  onDeleteSubtask: (id: number) => Promise<void>;
 };
 
 /** Диалог задачи: правка текста, планирование, смена колонки и удаление. */
-export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: TaskDialogProps) {
+export function TaskDialog({
+  task,
+  busy,
+  onClose,
+  onSave,
+  onMove,
+  onDelete,
+  subtasks,
+  onCreateSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
+}: TaskDialogProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -26,6 +41,8 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
   );
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [subtaskDraft, setSubtaskDraft] = useState("");
+  const [subtaskBusy, setSubtaskBusy] = useState(false);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -93,6 +110,21 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
   }
 
   const minutes = estimateMinutes();
+  const doneSubtasks = subtasks.filter((item) => item.done).length;
+
+  async function addSubtask() {
+    const title = subtaskDraft.trim();
+    if (!title || subtaskBusy) return;
+    setSubtaskBusy(true);
+    try {
+      await onCreateSubtask(title);
+      setSubtaskDraft("");
+    } catch {
+      // Ошибку показывает доска, поле остаётся с текстом.
+    } finally {
+      setSubtaskBusy(false);
+    }
+  }
 
   return (
     <div
@@ -242,6 +274,74 @@ export function TaskDialog({ task, busy, onClose, onSave, onMove, onDelete }: Ta
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mt-6">
+          <div className="mb-2 flex items-baseline justify-between text-[12px] text-steel">
+            <span>Чек-лист</span>
+            <span className="tabular-nums">
+              {doneSubtasks} / {subtasks.length}
+            </span>
+          </div>
+
+          {subtasks.length > 0 && (
+            <ul>
+              {subtasks.map((item) => (
+                <li
+                  key={item.id}
+                  className="grid grid-cols-[22px_1fr_auto] items-center gap-2 border-b border-rule py-1.5 last:border-b-0"
+                >
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={item.done}
+                    aria-label={item.title}
+                    onClick={() => void onToggleSubtask(item.id, !item.done)}
+                    className={`flex h-[18px] w-[18px] items-center justify-center border ${
+                      item.done ? "border-ink bg-ink text-paper" : "border-ink"
+                    }`}
+                  >
+                    {item.done && <span aria-hidden="true">✓</span>}
+                  </button>
+                  <span
+                    className={`text-[14px] ${item.done ? "text-steel line-through" : ""}`}
+                  >
+                    {item.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void onDeleteSubtask(item.id)}
+                    className="text-[12px] text-steel hover:text-ink"
+                  >
+                    удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void addSubtask();
+            }}
+            className="mt-2 flex items-center gap-3"
+          >
+            <input
+              value={subtaskDraft}
+              onChange={(event) => setSubtaskDraft(event.target.value)}
+              placeholder="добавить пункт"
+              aria-label="Новый пункт чек-листа"
+              className="w-full border-b border-rule bg-transparent py-1.5 text-[13px] outline-none focus:border-signal"
+            />
+            <button
+              type="submit"
+              disabled={!subtaskDraft.trim() || subtaskBusy}
+              className="shrink-0 text-[13px] text-ink hover:text-signal disabled:text-steel"
+            >
+              добавить
+            </button>
+          </form>
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-4">

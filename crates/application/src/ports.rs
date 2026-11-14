@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use todooshka_domain::{
-    PasswordHash, Project, ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp,
-    User, UserId, Username,
+    PasswordHash, Project, ProjectDraft, ProjectId, Subtask, SubtaskId, Task, TaskDraft, TaskId,
+    TaskStatus, Timestamp, User, UserId, Username,
 };
 
 use crate::error::RepositoryError;
@@ -73,6 +73,31 @@ pub trait TaskTransaction: Send + Sync {
     async fn save(&mut self, task: &Task) -> Result<(), RepositoryError>;
 
     async fn commit(&mut self) -> Result<(), RepositoryError>;
+}
+
+/// Чек-лист задачи: пункты читаются пачкой по проекту, операции точечные.
+#[async_trait]
+pub trait SubtaskStore: Send + Sync {
+    async fn list_by_project(&self, project_id: ProjectId)
+    -> Result<Vec<Subtask>, RepositoryError>;
+
+    /// `None` — задачи нет: сценарий сам решает, какую ошибку вернуть.
+    async fn add(
+        &self,
+        task_id: TaskId,
+        title: &str,
+        now: Timestamp,
+    ) -> Result<Option<Subtask>, RepositoryError>;
+
+    async fn update(
+        &self,
+        id: SubtaskId,
+        title: Option<&str>,
+        done: Option<bool>,
+        now: Timestamp,
+    ) -> Result<Option<Subtask>, RepositoryError>;
+
+    async fn delete(&self, id: SubtaskId) -> Result<bool, RepositoryError>;
 }
 
 /// Учётные записи: поиск по логину, создание, смена пароля.

@@ -86,6 +86,11 @@ impl From<ApplicationError> for ApiError {
                 "not_found",
                 format!("задача {id} не найдена"),
             ),
+            ApplicationError::SubtaskNotFound(id) => Self::new(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("пункт чек-листа {id} не найден"),
+            ),
             ApplicationError::UserNotFound(username) => Self::new(
                 StatusCode::NOT_FOUND,
                 "not_found",

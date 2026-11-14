@@ -9,6 +9,7 @@ mod error;
 mod health;
 mod projects;
 mod state;
+mod subtasks;
 mod tasks;
 
 pub use state::{AppState, ReadinessProbe};
@@ -47,6 +48,12 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/tasks/{id}", patch(tasks::update).delete(tasks::delete))
         .route("/tasks/{id}/move", post(tasks::move_task))
+        .route("/projects/{project_id}/subtasks", get(subtasks::list))
+        .route("/tasks/{id}/subtasks", post(subtasks::create))
+        .route(
+            "/subtasks/{id}",
+            patch(subtasks::update).delete(subtasks::delete),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth::require_session,

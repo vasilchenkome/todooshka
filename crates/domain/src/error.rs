@@ -34,6 +34,12 @@ pub enum DomainError {
     #[error("неизвестный приоритет: {0:?}")]
     InvalidPriority(String),
 
+    #[error("пункт чек-листа не может быть пустым")]
+    EmptySubtaskTitle,
+
+    #[error("пункт чек-листа длиннее {max} символов")]
+    SubtaskTitleTooLong { max: usize },
+
     #[error("статус задачи и время завершения не согласованы")]
     TaskCompletionInconsistent,
 

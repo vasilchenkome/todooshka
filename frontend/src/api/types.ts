@@ -84,6 +84,19 @@ export type TaskPatch = Partial<Pick<Task, "title" | "description">> & {
   planning?: TaskPlanning;
 };
 
+export const subtaskSchema = z.object({
+  id: z.number(),
+  task_id: z.number(),
+  title: z.string(),
+  done: z.boolean(),
+  position: z.number(),
+  created_at: z.number(),
+  updated_at: z.number(),
+});
+export type Subtask = z.infer<typeof subtaskSchema>;
+
+export const subtaskListSchema = z.array(subtaskSchema);
+
 export type NewTask = {
   title: string;
   description?: string;

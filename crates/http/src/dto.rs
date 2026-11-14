@@ -120,6 +120,44 @@ pub struct CreateTaskRequest {
     pub status: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct SubtaskDto {
+    pub id: i64,
+    pub task_id: i64,
+    pub title: String,
+    pub done: bool,
+    pub position: f64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+impl From<&todooshka_domain::Subtask> for SubtaskDto {
+    fn from(subtask: &todooshka_domain::Subtask) -> Self {
+        Self {
+            id: subtask.id().as_raw(),
+            task_id: subtask.task_id().as_raw(),
+            title: subtask.title().as_str().to_owned(),
+            done: subtask.is_done(),
+            position: subtask.position(),
+            created_at: subtask.created_at().as_unix_seconds(),
+            updated_at: subtask.updated_at().as_unix_seconds(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSubtaskRequest {
+    pub title: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EditSubtaskRequest {
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub done: Option<bool>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct EditTaskRequest {
     #[serde(default)]

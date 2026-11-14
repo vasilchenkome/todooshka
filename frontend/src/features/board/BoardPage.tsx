@@ -44,9 +44,24 @@ export default function BoardPage() {
     enabled: Number.isInteger(id) && id > 0,
   });
 
+  const subtasksQuery = useQuery({
+    queryKey: ["subtasks", id],
+    queryFn: () => api.listSubtasks(id),
+    enabled: Number.isInteger(id) && id > 0,
+  });
+
   const tasks = tasksQuery.data ?? [];
+  const subtasks = subtasksQuery.data ?? [];
   const columns = groupByStatus(tasks);
   const numbers = projectNumbers(tasks);
+
+  const subtaskCounts = new Map<number, { done: number; total: number }>();
+  for (const subtask of subtasks) {
+    const current = subtaskCounts.get(subtask.task_id) ?? { done: 0, total: 0 };
+    current.total += 1;
+    if (subtask.done) current.done += 1;
+    subtaskCounts.set(subtask.task_id, current);
+  }
 
   const [dragged, setDragged] = useState<Task | null>(null);
   const [activeStatus, setActiveStatus] = useState<TaskStatus>("backlog");
@@ -112,6 +127,32 @@ export default function BoardPage() {
     onSuccess: (updated) => {
       setDialogTask(updated);
       void queryClient.invalidateQueries({ queryKey: taskKey });
+    },
+    onError: (error) => setActionError(errorText(error)),
+  });
+
+  const createSubtask = useMutation({
+    mutationFn: (input: { taskId: number; title: string }) =>
+      api.createSubtask(input.taskId, input.title),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["subtasks", id] });
+    },
+    onError: (error) => setActionError(errorText(error)),
+  });
+
+  const updateSubtask = useMutation({
+    mutationFn: (input: { id: number; done: boolean }) =>
+      api.updateSubtask(input.id, { done: input.done }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["subtasks", id] });
+    },
+    onError: (error) => setActionError(errorText(error)),
+  });
+
+  const deleteSubtask = useMutation({
+    mutationFn: (subtaskId: number) => api.deleteSubtask(subtaskId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["subtasks", id] });
     },
     onError: (error) => setActionError(errorText(error)),
   });
@@ -237,6 +278,7 @@ export default function BoardPage() {
                   title={title}
                   tasks={columns[status]}
                   numbers={numbers}
+                  subtasks={subtaskCounts}
                   accent={status === "in_progress"}
                   activeOnMobile={activeStatus === status}
                   creating={createTask.isPending}
@@ -274,6 +316,16 @@ export default function BoardPage() {
           }}
           onDelete={async () => {
             await deleteTask.mutateAsync(dialogTask.id);
+          }}
+          subtasks={subtasks.filter((subtask) => subtask.task_id === dialogTask.id)}
+          onCreateSubtask={async (title) => {
+            await createSubtask.mutateAsync({ taskId: dialogTask.id, title });
+          }}
+          onToggleSubtask={async (subtaskId, done) => {
+            await updateSubtask.mutateAsync({ id: subtaskId, done });
+          }}
+          onDeleteSubtask={async (subtaskId) => {
+            await deleteSubtask.mutateAsync(subtaskId);
           }}
         />
       )}
