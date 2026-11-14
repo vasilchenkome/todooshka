@@ -262,9 +262,34 @@ async fn open_database() -> Result<SqlitePool, Box<dyn Error>> {
 }
 
 async fn shutdown_signal() {
-    if let Err(err) = tokio::signal::ctrl_c().await {
-        tracing::error!(%err, "не удалось подписаться на Ctrl+C");
-        return;
+    let ctrl_c = async {
+        if let Err(err) = tokio::signal::ctrl_c().await {
+            tracing::error!(%err, "не удалось подписаться на Ctrl+C");
+        }
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut signal) => {
+                signal.recv().await;
+            }
+            Err(err) => tracing::error!(%err, "не удалось подписаться на SIGTERM"),
+        }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = terminate => {}
     }
+
     tracing::info!("получен сигнал остановки, завершаю работу");
+
+    tokio::spawn(async {
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        tracing::warn!("соединения не закрылись за 10 секунд, завершаюсь принудительно");
+        std::process::exit(0);
+    });
 }
