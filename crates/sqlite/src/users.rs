@@ -110,10 +110,12 @@ impl UserStore for SqliteUsers {
     }
 
     async fn list(&self) -> Result<Vec<User>, RepositoryError> {
-        let rows: Vec<UserRow> = sqlx::query_as(&format!("{SELECT_USER} ORDER BY username ASC"))
-            .fetch_all(&self.pool)
-            .await
-            .map_err(unavailable)?;
+        let rows: Vec<UserRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "{SELECT_USER} ORDER BY username ASC"
+        )))
+        .fetch_all(&self.pool)
+        .await
+        .map_err(unavailable)?;
 
         rows.into_iter().map(UserRow::into_domain).collect()
     }

@@ -82,7 +82,7 @@ impl SubtaskStore for SqliteSubtasks {
             return Ok(None);
         }
 
-        let row: SubtaskRow = sqlx::query_as(&format!(
+        let row: SubtaskRow = sqlx::query_as(sqlx::AssertSqlSafe(format!(
             "INSERT INTO subtasks (task_id, title, done, position, created_at, updated_at)
              VALUES (
                 ?1, ?2, 0,
@@ -90,7 +90,7 @@ impl SubtaskStore for SqliteSubtasks {
                 ?3, ?3
              )
              RETURNING {COLUMNS}"
-        ))
+        )))
         .bind(task_id.as_raw())
         .bind(title)
         .bind(now.as_unix_seconds())
@@ -108,12 +108,13 @@ impl SubtaskStore for SqliteSubtasks {
         done: Option<bool>,
         now: Timestamp,
     ) -> Result<Option<Subtask>, RepositoryError> {
-        let row: Option<SubtaskRow> =
-            sqlx::query_as(&format!("SELECT {COLUMNS} FROM subtasks WHERE id = ?1"))
-                .bind(id.as_raw())
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(unavailable)?;
+        let row: Option<SubtaskRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {COLUMNS} FROM subtasks WHERE id = ?1"
+        )))
+        .bind(id.as_raw())
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(unavailable)?;
 
         let Some(row) = row else {
             return Ok(None);

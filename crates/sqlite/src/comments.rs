@@ -78,11 +78,11 @@ impl CommentStore for SqliteComments {
             return Ok(None);
         }
 
-        let row: CommentRow = sqlx::query_as(&format!(
+        let row: CommentRow = sqlx::query_as(sqlx::AssertSqlSafe(format!(
             "INSERT INTO comments (task_id, body, created_at, updated_at)
              VALUES (?1, ?2, ?3, ?3)
              RETURNING {COLUMNS}"
-        ))
+        )))
         .bind(task_id.as_raw())
         .bind(body)
         .bind(now.as_unix_seconds())
@@ -99,12 +99,13 @@ impl CommentStore for SqliteComments {
         body: &str,
         now: Timestamp,
     ) -> Result<Option<Comment>, RepositoryError> {
-        let row: Option<CommentRow> =
-            sqlx::query_as(&format!("SELECT {COLUMNS} FROM comments WHERE id = ?1"))
-                .bind(id.as_raw())
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(unavailable)?;
+        let row: Option<CommentRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {COLUMNS} FROM comments WHERE id = ?1"
+        )))
+        .bind(id.as_raw())
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(unavailable)?;
 
         let Some(row) = row else {
             return Ok(None);
