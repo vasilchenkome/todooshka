@@ -28,6 +28,9 @@ It is intentionally **not**:
 - Planning: calendar due date, four priorities, time estimate in minutes.
 - Checklists with progress on the card.
 - Tags, text search, filters by priority, due date, and tag; filter state lives in the URL.
+- Today view: overdue, today, and the next seven days in one read-only list; a row opens the task on its board.
+- JSON export through the CLI or `GET /api/export`: projects, tasks, checklists, tags, comments, and attachment metadata. Attachment bytes and account data stay out.
+- Sticky app header and board filters; on desktop every column scrolls independently, while the page itself stays fixed.
 - Comments with editing and deletion.
 - Attachments up to 10 MB, at most 10 per task. Files are stored in SQLite, so they are included
   in a regular database backup.
@@ -108,6 +111,7 @@ todooshka user passwd -u demo   # changing it revokes all sessions
 todooshka user list
 todooshka healthcheck             # 0 when /api/health/ready returns 200
 todooshka backup ./copy.db        # VACUUM INTO + integrity_check
+todooshka export ./todooshka.json # portable JSON snapshot
 ```
 
 For scripts and containers, pass the password as one line:
@@ -119,7 +123,7 @@ cookie (`HttpOnly`, `SameSite=Lax`, 30 days).
 ## Tests
 
 ```bash
-cd frontend && npm ci && npm run build && cd ..
+cd frontend && npm ci && npm test && npm run build && cd ..
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
