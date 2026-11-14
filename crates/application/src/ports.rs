@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use todooshka_domain::{
-    Project, ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp,
+    PasswordHash, Project, ProjectDraft, ProjectId, Task, TaskDraft, TaskId, TaskStatus, Timestamp,
+    User, UserId, Username,
 };
 
 use crate::error::RepositoryError;
@@ -62,4 +63,66 @@ pub trait TaskTransaction: Send + Sync {
     async fn save(&mut self, task: &Task) -> Result<(), RepositoryError>;
 
     async fn commit(&mut self) -> Result<(), RepositoryError>;
+}
+
+/// Учётные записи: поиск по логину, создание, смена пароля.
+#[async_trait]
+pub trait UserStore: Send + Sync {
+    async fn find_by_username(&self, username: &Username) -> Result<Option<User>, RepositoryError>;
+
+    async fn find_by_id(&self, id: UserId) -> Result<Option<User>, RepositoryError>;
+
+    async fn insert(
+        &self,
+        username: &Username,
+        password_hash: &PasswordHash,
+        now: Timestamp,
+    ) -> Result<User, RepositoryError>;
+
+    async fn update_password(
+        &self,
+        username: &Username,
+        password_hash: &PasswordHash,
+    ) -> Result<bool, RepositoryError>;
+
+    async fn list(&self) -> Result<Vec<User>, RepositoryError>;
+}
+
+/// Сессия в хранилище: наружу отдаётся только хеш токена, сам токен живёт в cookie.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct StoredSession {
+    pub id_hash: String,
+    pub user_id: UserId,
+    pub created_at: Timestamp,
+    pub expires_at: Timestamp,
+    pub last_seen_at: Timestamp,
+}
+
+/// Серверные сессии: создание, поиск по хешу, продление отметки, отзыв.
+#[async_trait]
+pub trait SessionStore: Send + Sync {
+    async fn create(&self, session: &StoredSession) -> Result<(), RepositoryError>;
+
+    async fn find(&self, id_hash: &str) -> Result<Option<StoredSession>, RepositoryError>;
+
+    async fn touch(&self, id_hash: &str, seen_at: Timestamp) -> Result<(), RepositoryError>;
+
+    async fn delete(&self, id_hash: &str) -> Result<(), RepositoryError>;
+
+    async fn delete_for_user(&self, user_id: UserId) -> Result<(), RepositoryError>;
+}
+
+/// Хеширование паролей: конкретный алгоритм — деталь инфраструктуры.
+pub trait PasswordHasher: Send + Sync {
+    fn hash(&self, password: &str) -> Result<PasswordHash, RepositoryError>;
+
+    fn verify(&self, password: &str, hash: &PasswordHash) -> bool;
+}
+
+/// Выпуск и хеширование токенов сессий: в БД попадает только хеш.
+pub trait SessionTokens: Send + Sync {
+    /// Возвращает пару (токен для cookie, хеш для БД).
+    fn issue(&self) -> (String, String);
+
+    fn hash(&self, token: &str) -> String;
 }

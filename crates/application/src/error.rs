@@ -1,4 +1,4 @@
-use todooshka_domain::{DomainError, ProjectId, TaskId};
+use todooshka_domain::{DomainError, ProjectId, TaskId, Username};
 
 /// Как порт хранения сообщает о своих проблемах, не выдавая драйвер БД.
 ///
@@ -30,4 +30,13 @@ pub enum ApplicationError {
 
     #[error("задача {0} не найдена")]
     TaskNotFound(TaskId),
+
+    #[error("неверный логин или пароль")]
+    InvalidCredentials,
+
+    #[error("пользователь {0} не найден")]
+    UserNotFound(Username),
+
+    #[error("логин {0} уже занят")]
+    UsernameTaken(Username),
 }

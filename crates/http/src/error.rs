@@ -60,6 +60,21 @@ impl From<ApplicationError> for ApiError {
                 "not_found",
                 format!("задача {id} не найдена"),
             ),
+            ApplicationError::UserNotFound(username) => Self::new(
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("пользователь {username} не найден"),
+            ),
+            ApplicationError::UsernameTaken(username) => Self::new(
+                StatusCode::CONFLICT,
+                "username_taken",
+                format!("логин {username} уже занят"),
+            ),
+            ApplicationError::InvalidCredentials => Self::new(
+                StatusCode::UNAUTHORIZED,
+                "invalid_credentials",
+                "неверный логин или пароль",
+            ),
             ApplicationError::Repository(RepositoryError::Conflict(message)) => {
                 Self::new(StatusCode::CONFLICT, "write_conflict", message)
             }

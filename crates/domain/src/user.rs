@@ -50,6 +50,12 @@ impl Username {
     }
 }
 
+impl std::fmt::Display for Username {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.0)
+    }
+}
+
 /// Хеш пароля — непрозрачное значение: домен не знает, чем именно он посчитан.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PasswordHash(String);
