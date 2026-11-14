@@ -89,11 +89,11 @@ impl AttachmentStore for SqliteAttachments {
             return Ok(None);
         }
 
-        let row: AttachmentRow = sqlx::query_as(&format!(
+        let row: AttachmentRow = sqlx::query_as(sqlx::AssertSqlSafe(format!(
             "INSERT INTO attachments (task_id, filename, content_type, size, data, created_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)
              RETURNING {META_COLUMNS}"
-        ))
+        )))
         .bind(task_id.as_raw())
         .bind(filename)
         .bind(content_type)
