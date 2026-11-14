@@ -66,37 +66,54 @@ cd frontend && npm run build
 ## Docker и запуск на VM
 
 Один бинарь отдаёт и API, и интерфейс: отдельный nginx не нужен, статика вшита в release-сборку.
-Образ собирается на Linux VM, где есть Docker; на рабочем ПК Docker не требуется.
+Образ собирает GitHub Actions при каждом пуше в `main` и публикует в GHCR:
 
-```bash
-# на VM, из каталога репозитория
-docker compose build
-docker compose up -d
-docker compose ps            # app должен стать healthy
+```
+ghcr.io/vasilchenkome/todooshka:latest
+ghcr.io/vasilchenkome/todooshka:sha-<короткий коммит>
+ghcr.io/vasilchenkome/todooshka:<версия из Cargo.toml>
 ```
 
-Первый запуск: создать пользователя (пароль вводится скрыто, дважды).
+Пакет публичный: VM тянет образ без логина в GHCR, репозиторий при этом остаётся приватным.
 
 ```bash
+# первый запуск на VM
+git clone git@github.com:vasilchenkome/todooshka.git /opt/todooshka
+cd /opt/todooshka
+docker compose pull
+docker compose up -d
+docker compose ps            # app должен стать healthy
+
+# создать пользователя (пароль вводится скрыто, дважды)
 docker compose exec app todooshka user add -u kirill
 ```
 
 Сервис слушает `http://<ip-vm>:8080`; порт и тег образа задаются в `.env` рядом с compose:
-`TODOOSHKA_PORT` (по умолчанию 8080), `TODOOSHKA_TAG` (по умолчанию 0.1.0), `COOKIE_SECURE`.
+`TODOOSHKA_PORT` (по умолчанию 8080), `TODOOSHKA_TAG` (по умолчанию `latest`), `COOKIE_SECURE`.
 Приложение в контейнере пишет JSON-логи (`LOG_FORMAT=json`):
 
 ```bash
 docker compose logs -f app
 ```
 
+Собрать образ на месте без CI можно так (нужен Docker и исходники):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml build
+```
+
 ### Обновление и откат
 
 ```bash
-TODOOSHKA_TAG=0.2.0 docker compose build
-TODOOSHKA_TAG=0.2.0 docker compose up -d
-# откат на прошлый тег
-TODOOSHKA_TAG=0.1.0 docker compose up -d
+git pull
+docker compose pull
+docker compose up -d
+# откат на конкретную сборку
+TODOOSHKA_TAG=sha-1a2b3c4 docker compose pull
+TODOOSHKA_TAG=sha-1a2b3c4 docker compose up -d
 ```
+
+Проверить, какая сборка запущена: `docker compose ps` и `docker inspect --format '{{.Config.Image}}' todooshka-app-1`.
 
 ### Бэкап и восстановление
 
@@ -135,5 +152,5 @@ Caddy получает сертификат сам, приложение ост�
 - [x] 3. Auth (CLI пользователей, Argon2id, cookie-сессии, лимит попыток)
 - [x] 4. Фронт: макет и проекты (вход, список, создание, архив)
 - [x] 5. Фронт: доска и DnD (перенос между колонками, диалог задачи, вкладки на телефоне)
-- [ ] 6. Образ и VM — образ и compose готовы, проверка на VM впереди
+- [x] 6. Образ и VM (CI собирает образ, VM тянет из GHCR, рестарт и восстановление проверены)
 - [ ] 7. Полировка

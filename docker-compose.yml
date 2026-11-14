@@ -2,10 +2,7 @@ name: todooshka
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: todooshka:${TODOOSHKA_TAG:-0.1.0}
+    image: ghcr.io/vasilchenkome/todooshka:${TODOOSHKA_TAG:-latest}
     restart: unless-stopped
     stop_grace_period: 20s
     environment:
