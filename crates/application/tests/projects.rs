@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use todooshka_app::{
-    ApplicationError, Clock, CreateProject, ProjectRepository, ProjectService, RenameProject,
-    RepositoryError,
+    ApplicationError, Clock, CreateProject, ProjectRepository, ProjectService, RepositoryError,
+    UpdateProject,
 };
 use todooshka_domain::{DomainError, Project, ProjectDraft, ProjectId, Timestamp};
 
@@ -13,6 +13,7 @@ struct FakeProjects {
     items: Mutex<Vec<Project>>,
     next_id: AtomicI64,
     fail: AtomicBool,
+    saves: AtomicI64,
 }
 
 impl FakeProjects {
@@ -22,6 +23,10 @@ impl FakeProjects {
 
     fn fail_next(&self) {
         self.fail.store(true, Ordering::SeqCst);
+    }
+
+    fn saves_count(&self) -> i64 {
+        self.saves.load(Ordering::SeqCst)
     }
 
     fn check_available(&self) -> Result<(), RepositoryError> {
@@ -85,6 +90,7 @@ impl ProjectRepository for FakeProjects {
             ));
         };
         *slot = project.clone();
+        self.saves.fetch_add(1, Ordering::SeqCst);
         Ok(())
     }
 }
@@ -129,6 +135,16 @@ fn create_command(name: &str) -> CreateProject {
         name: name.to_owned(),
         description: String::new(),
         color: None,
+    }
+}
+
+fn update_command(id: ProjectId) -> UpdateProject {
+    UpdateProject {
+        id,
+        name: None,
+        description: None,
+        color: None,
+        archived: None,
     }
 }
 
@@ -193,7 +209,9 @@ async fn list_hides_archived_until_asked() {
         .expect("проект создаётся");
 
     h.clock.set(200);
-    h.service.archive(archived.id()).await.expect("архив");
+    let mut archive = update_command(archived.id());
+    archive.archived = Some(true);
+    h.service.update(archive).await.expect("архив");
 
     let active = h.service.list(false).await.expect("список активных");
     let all = h.service.list(true).await.expect("список всех");
@@ -209,7 +227,7 @@ async fn list_hides_archived_until_asked() {
 }
 
 #[tokio::test]
-async fn rename_updates_name_and_timestamps() {
+async fn update_renames_project_and_bumps_updated_at() {
     let h = harness();
     let project = h
         .service
@@ -218,44 +236,52 @@ async fn rename_updates_name_and_timestamps() {
         .expect("проект создаётся");
     h.clock.set(200);
 
-    let renamed = h
-        .service
-        .rename(RenameProject {
-            id: project.id(),
-            name: "  Новое  ".to_owned(),
-        })
-        .await
-        .expect("имя обновляется");
+    let mut command = update_command(project.id());
+    command.name = Some("  Новое  ".to_owned());
+    let updated = h.service.update(command).await.expect("имя обновляется");
 
-    assert_eq!(renamed.name().as_str(), "Новое");
-    assert_eq!(renamed.updated_at(), Timestamp::from_unix_seconds(200));
-    assert_eq!(renamed.created_at(), Timestamp::from_unix_seconds(100));
-    assert_eq!(
-        h.projects.stored()[0].name().as_str(),
-        "Новое",
-        "изменение должно попасть в хранилище"
-    );
+    assert_eq!(updated.name().as_str(), "Новое");
+    assert_eq!(updated.updated_at(), Timestamp::from_unix_seconds(200));
+    assert_eq!(updated.created_at(), Timestamp::from_unix_seconds(100));
+    assert_eq!(h.projects.stored()[0].name().as_str(), "Новое");
+    assert_eq!(h.projects.saves_count(), 1);
 }
 
 #[tokio::test]
-async fn rename_missing_project_reports_not_found() {
+async fn update_with_unchanged_values_does_not_touch_storage() {
+    let h = harness();
+    let project = h
+        .service
+        .create(create_command("Проект"))
+        .await
+        .expect("проект создаётся");
+    h.clock.set(200);
+
+    let mut command = update_command(project.id());
+    command.name = Some("Проект".to_owned());
+    command.archived = Some(false);
+    let updated = h.service.update(command).await.expect("правка проходит");
+
+    assert_eq!(updated.updated_at(), Timestamp::from_unix_seconds(100));
+    assert_eq!(h.projects.saves_count(), 0, "лишней записи быть не должно");
+}
+
+#[tokio::test]
+async fn update_missing_project_reports_not_found() {
     let h = harness();
     let id = ProjectId::from_raw(42);
 
     let error = h
         .service
-        .rename(RenameProject {
-            id,
-            name: "Новое".to_owned(),
-        })
+        .update(update_command(id))
         .await
-        .expect_err("несуществующий проект нельзя переименовать");
+        .expect_err("несуществующий проект нельзя обновить");
 
     assert_eq!(error, ApplicationError::ProjectNotFound(id));
 }
 
 #[tokio::test]
-async fn archive_is_idempotent() {
+async fn update_archive_is_idempotent() {
     let h = harness();
     let project = h
         .service
@@ -264,13 +290,11 @@ async fn archive_is_idempotent() {
         .expect("проект создаётся");
 
     h.clock.set(200);
-    let first = h.service.archive(project.id()).await.expect("архив");
+    let mut command = update_command(project.id());
+    command.archived = Some(true);
+    let first = h.service.update(command.clone()).await.expect("архив");
     h.clock.set(300);
-    let second = h
-        .service
-        .archive(project.id())
-        .await
-        .expect("повторный архив");
+    let second = h.service.update(command).await.expect("повторный архив");
 
     assert!(first.is_archived());
     assert_eq!(
@@ -281,21 +305,22 @@ async fn archive_is_idempotent() {
 }
 
 #[tokio::test]
-async fn unarchive_returns_project_to_board() {
+async fn update_unarchive_returns_project_to_board() {
     let h = harness();
     let project = h
         .service
         .create(create_command("Проект"))
         .await
         .expect("проект создаётся");
-    h.service.archive(project.id()).await.expect("архив");
+
+    let mut archive = update_command(project.id());
+    archive.archived = Some(true);
+    h.service.update(archive).await.expect("архив");
 
     h.clock.set(200);
-    let restored = h
-        .service
-        .unarchive(project.id())
-        .await
-        .expect("проект возвращается");
+    let mut unarchive = update_command(project.id());
+    unarchive.archived = Some(false);
+    let restored = h.service.update(unarchive).await.expect("возврат");
 
     assert!(!restored.is_archived());
     assert_eq!(h.service.list(false).await.expect("список").len(), 1);

@@ -1,0 +1,18 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use todooshka_app::Clock;
+use todooshka_domain::Timestamp;
+
+/// Системные часы: единственное место, где сценарии узнают реальное время.
+pub struct SystemClock;
+
+impl Clock for SystemClock {
+    fn now(&self) -> Timestamp {
+        let seconds = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_secs() as i64)
+            .unwrap_or_default();
+
+        Timestamp::from_unix_seconds(seconds)
+    }
+}

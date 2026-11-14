@@ -1595,6 +1595,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "thiserror",
+ "todooshka-app",
+ "todooshka-domain",
  "todooshka-http",
  "todooshka-sqlite",
  "tokio",
@@ -1624,7 +1626,16 @@ name = "todooshka-http"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "http-body-util",
  "serde",
+ "serde_json",
+ "tempfile",
+ "todooshka-app",
+ "todooshka-domain",
+ "todooshka-sqlite",
+ "tokio",
+ "tower",
+ "tracing",
 ]
 
 [[package]]

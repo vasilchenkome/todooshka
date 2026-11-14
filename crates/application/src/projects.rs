@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use todooshka_domain::{Project, ProjectDraft, ProjectId, ProjectName};
+use todooshka_domain::{Project, ProjectColor, ProjectDraft, ProjectId, ProjectName};
 
 use crate::error::ApplicationError;
 use crate::ports::{Clock, ProjectRepository};
@@ -13,11 +13,14 @@ pub struct CreateProject {
     pub color: Option<String>,
 }
 
-/// Переименовать проект.
+/// Частичное изменение проекта: заданы только те поля, которые меняются.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RenameProject {
+pub struct UpdateProject {
     pub id: ProjectId,
-    pub name: String,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub color: Option<String>,
+    pub archived: Option<bool>,
 }
 
 /// Сценарии проектов доски. Транзакций здесь нет: каждая операция — один факт хранения.
@@ -46,34 +49,63 @@ impl ProjectService {
         Ok(projects)
     }
 
-    pub async fn rename(&self, command: RenameProject) -> Result<Project, ApplicationError> {
-        let name = ProjectName::parse(&command.name)?;
+    /// Применяет изменения одним сохранением.
+    ///
+    /// Все значения проверяются до первой мутации, поэтому ошибка валидации не оставляет
+    /// проект наполовину изменённым. Совпадающие значения не считаются изменением и не
+    /// сдвигают `updated_at`.
+    pub async fn update(&self, command: UpdateProject) -> Result<Project, ApplicationError> {
+        let name = command
+            .name
+            .as_deref()
+            .map(ProjectName::parse)
+            .transpose()?;
+        let color = command
+            .color
+            .as_deref()
+            .map(ProjectColor::parse)
+            .transpose()?;
+
         let mut project = self.require(command.id).await?;
+        let now = self.clock.now();
+        let mut changed = false;
 
-        project.rename(name, self.clock.now());
-        self.projects.save(&project).await?;
-        Ok(project)
-    }
-
-    pub async fn archive(&self, id: ProjectId) -> Result<Project, ApplicationError> {
-        let mut project = self.require(id).await?;
-        if project.is_archived() {
-            return Ok(project);
+        if let Some(name) = name
+            && name != *project.name()
+        {
+            project.rename(name, now);
+            changed = true;
         }
 
-        project.archive(self.clock.now());
-        self.projects.save(&project).await?;
-        Ok(project)
-    }
-
-    pub async fn unarchive(&self, id: ProjectId) -> Result<Project, ApplicationError> {
-        let mut project = self.require(id).await?;
-        if !project.is_archived() {
-            return Ok(project);
+        if let Some(description) = command.description.as_deref()
+            && description != project.description()
+        {
+            project.describe(description, now)?;
+            changed = true;
         }
 
-        project.unarchive(self.clock.now());
-        self.projects.save(&project).await?;
+        if let Some(color) = color
+            && color != *project.color()
+        {
+            project.recolor(color, now);
+            changed = true;
+        }
+
+        if let Some(archived) = command.archived
+            && archived != project.is_archived()
+        {
+            if archived {
+                project.archive(now);
+            } else {
+                project.unarchive(now);
+            }
+            changed = true;
+        }
+
+        if changed {
+            self.projects.save(&project).await?;
+        }
+
         Ok(project)
     }
 

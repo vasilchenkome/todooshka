@@ -9,3 +9,14 @@ authors.workspace = true
 [dependencies]
 axum.workspace = true
 serde.workspace = true
+todooshka-app.workspace = true
+todooshka-domain.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+http-body-util = "0.1"
+serde_json = "1"
+tempfile = "3"
+tokio.workspace = true
+todooshka-sqlite.workspace = true
+tower = { version = "0.5", features = ["util"] }

@@ -9,4 +9,4 @@ mod projects;
 
 pub use error::{ApplicationError, RepositoryError};
 pub use ports::{Clock, ProjectRepository};
-pub use projects::{CreateProject, ProjectService, RenameProject};
+pub use projects::{CreateProject, ProjectService, UpdateProject};

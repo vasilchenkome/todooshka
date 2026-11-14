@@ -1,9 +1,17 @@
 //! Composition root: конфигурация, сборка зависимостей и запуск сервера.
 
+mod clock;
 mod config;
 mod logging;
 
 use std::process::ExitCode;
+use std::sync::Arc;
+
+use todooshka_app::{ProjectRepository, ProjectService};
+use todooshka_http::AppState;
+use todooshka_sqlite::SqliteProjects;
+
+use crate::clock::SystemClock;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -24,6 +32,12 @@ async fn run() -> Result<(), config::StartupError> {
     todooshka_sqlite::migrate(&pool).await?;
     tracing::info!("миграции применены");
 
+    let repository: Arc<dyn ProjectRepository> = Arc::new(SqliteProjects::new(pool.clone()));
+    let projects = ProjectService::new(repository, Arc::new(SystemClock));
+    let state = AppState {
+        projects: Arc::new(projects),
+    };
+
     let addr = config::bind_addr()?;
     let listener = tokio::net::TcpListener::bind(addr)
         .await
@@ -31,7 +45,7 @@ async fn run() -> Result<(), config::StartupError> {
 
     tracing::info!(%addr, version = env!("CARGO_PKG_VERSION"), "todooshka запущен");
 
-    axum::serve(listener, todooshka_http::router())
+    axum::serve(listener, todooshka_http::router(state))
         .with_graceful_shutdown(shutdown_signal())
         .await
         .map_err(config::StartupError::Serve)?;
