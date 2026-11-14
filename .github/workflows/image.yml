@@ -16,7 +16,9 @@ jobs:
       - uses: actions/checkout@v7
 
       - id: version
-        run: echo "value=$(sed -n 's/^version = \"\\(.*\\)\"/\\1/p' Cargo.toml | head -1)" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(awk -F'"' '/^version = /{print $2; exit}' Cargo.toml)
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4
 
