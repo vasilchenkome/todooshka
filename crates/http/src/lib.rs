@@ -7,11 +7,12 @@ mod error;
 mod health;
 mod projects;
 mod state;
+mod tasks;
 
 pub use state::AppState;
 
 use axum::Router;
-use axum::routing::{get, patch};
+use axum::routing::{get, patch, post};
 
 /// Собирает роутер приложения. Composition root передаёт готовые сценарии в состоянии.
 pub fn router(state: AppState) -> Router {
@@ -22,5 +23,14 @@ pub fn router(state: AppState) -> Router {
             "/api/projects/{id}",
             patch(projects::update).delete(projects::archive),
         )
+        .route(
+            "/api/projects/{project_id}/tasks",
+            get(tasks::list).post(tasks::create),
+        )
+        .route(
+            "/api/tasks/{id}",
+            patch(tasks::update).delete(tasks::delete),
+        )
+        .route("/api/tasks/{id}/move", post(tasks::move_task))
         .with_state(state)
 }

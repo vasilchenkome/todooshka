@@ -7,9 +7,9 @@ mod logging;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use todooshka_app::{ProjectRepository, ProjectService};
+use todooshka_app::{Clock, ProjectRepository, ProjectService, TaskService, TaskStore};
 use todooshka_http::AppState;
-use todooshka_sqlite::SqliteProjects;
+use todooshka_sqlite::{SqliteProjects, SqliteTasks};
 
 use crate::clock::SystemClock;
 
@@ -32,11 +32,22 @@ async fn run() -> Result<(), config::StartupError> {
     todooshka_sqlite::migrate(&pool).await?;
     tracing::info!("миграции применены");
 
-    let repository: Arc<dyn ProjectRepository> = Arc::new(SqliteProjects::new(pool.clone()));
-    let projects = ProjectService::new(repository, Arc::new(SystemClock));
-    let state = AppState {
-        projects: Arc::new(projects),
-    };
+    let projects_repository: Arc<dyn ProjectRepository> =
+        Arc::new(SqliteProjects::new(pool.clone()));
+    let tasks_repository: Arc<dyn TaskStore> = Arc::new(SqliteTasks::new(pool.clone()));
+    let clock: Arc<dyn Clock> = Arc::new(SystemClock);
+
+    let projects = Arc::new(ProjectService::new(
+        Arc::clone(&projects_repository),
+        Arc::clone(&clock),
+    ));
+    let tasks = Arc::new(TaskService::new(
+        tasks_repository,
+        projects_repository,
+        clock,
+    ));
+
+    let state = AppState { projects, tasks };
 
     let addr = config::bind_addr()?;
     let listener = tokio::net::TcpListener::bind(addr)

@@ -20,6 +20,15 @@ impl ApiError {
             message: message.into(),
         }
     }
+
+    /// Ошибка разбора запроса: та же форма, что у доменной валидации.
+    pub fn validation(message: impl Into<String>) -> Self {
+        Self::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "validation_failed",
+            message,
+        )
+    }
 }
 
 #[derive(Serialize)]

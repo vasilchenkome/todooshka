@@ -7,10 +7,10 @@ use axum::http::{Method, Request, StatusCode, header};
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use tempfile::TempDir;
-use todooshka_app::{Clock, ProjectRepository, ProjectService};
+use todooshka_app::{Clock, ProjectRepository, ProjectService, TaskService, TaskStore};
 use todooshka_domain::Timestamp;
 use todooshka_http::{AppState, router};
-use todooshka_sqlite::{SqliteProjects, connect, migrate};
+use todooshka_sqlite::{SqliteProjects, SqliteTasks, connect, migrate};
 use tower::ServiceExt;
 
 struct FixedClock(AtomicI64);
@@ -33,13 +33,23 @@ async fn app() -> TestApp {
     let pool = connect(&url).await.expect("база открывается");
     migrate(&pool).await.expect("миграции применяются");
 
-    let repository: Arc<dyn ProjectRepository> = Arc::new(SqliteProjects::new(pool));
-    let service = ProjectService::new(repository, Arc::new(FixedClock(AtomicI64::new(1_000))));
+    let projects_repository: Arc<dyn ProjectRepository> =
+        Arc::new(SqliteProjects::new(pool.clone()));
+    let tasks_repository: Arc<dyn TaskStore> = Arc::new(SqliteTasks::new(pool));
+    let clock: Arc<dyn Clock> = Arc::new(FixedClock(AtomicI64::new(1_000)));
+
+    let projects = Arc::new(ProjectService::new(
+        Arc::clone(&projects_repository),
+        Arc::clone(&clock),
+    ));
+    let tasks = Arc::new(TaskService::new(
+        tasks_repository,
+        projects_repository,
+        clock,
+    ));
 
     TestApp {
-        router: router(AppState {
-            projects: Arc::new(service),
-        }),
+        router: router(AppState { projects, tasks }),
         _dir: dir,
     }
 }
