@@ -400,7 +400,7 @@ export default function BoardPage() {
               type="button"
               aria-label={t("board.addColumnAria", { column: statusLabel(activeStatus, locale) })}
               onClick={() => setMobileAddSignal((value) => value + 1)}
-              className="grid h-11 w-11 shrink-0 place-items-center border-l border-rule"
+              className="grid h-11 w-11 shrink-0 place-items-center"
             >
               <span aria-hidden="true" className="grid h-7 w-7 place-items-center border border-rule font-display text-[18px] font-semibold leading-none">
                 +
