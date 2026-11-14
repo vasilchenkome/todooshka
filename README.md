@@ -119,11 +119,11 @@ cookie (`HttpOnly`, `SameSite=Lax`, 30 days).
 ## Tests
 
 ```bash
+cd frontend && npm ci && npm run build && cd ..
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ./scripts/check-boundaries.sh
-cd frontend && npm run build
 ```
 
 ## Docker and deployment

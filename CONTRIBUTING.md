@@ -26,11 +26,11 @@ The backend uses `sqlite://todooshka.db` by default. Create a user with
 Run all checks from the repository root:
 
 ```bash
+cd frontend && npm ci && npm run build && cd ..
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ./scripts/check-boundaries.sh
-cd frontend && npm run build
 ```
 
 A pull request should:
