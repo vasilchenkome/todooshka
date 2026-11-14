@@ -27,4 +27,19 @@ pub enum DomainError {
 
     #[error("статус задачи и время завершения не согласованы")]
     TaskCompletionInconsistent,
+
+    #[error("логин не может быть пустым")]
+    EmptyUsername,
+
+    #[error("логин длиннее {max} символов")]
+    UsernameTooLong { max: usize },
+
+    #[error("логин содержит недопустимые символы")]
+    InvalidUsername,
+
+    #[error("пароль должен быть не короче {min} символов")]
+    WeakPassword { min: usize },
+
+    #[error("хеш пароля пуст")]
+    InvalidPasswordHash,
 }

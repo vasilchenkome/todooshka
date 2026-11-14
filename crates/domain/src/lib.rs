@@ -8,6 +8,7 @@ mod ordering;
 mod project;
 mod task;
 mod time;
+mod user;
 
 pub use error::DomainError;
 pub use ordering::{STEP, between, evenly};
@@ -20,3 +21,6 @@ pub use task::{
     TaskStatus, TaskTitle,
 };
 pub use time::Timestamp;
+pub use user::{
+    MAX_USERNAME_CHARS, MIN_PASSWORD_CHARS, PasswordHash, User, UserId, Username, validate_password,
+};
