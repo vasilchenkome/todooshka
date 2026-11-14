@@ -7,10 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-14
+
 ### Added
 
 - Today view with overdue, today, and the next seven days; rows deep-link to the task dialog on the board.
 - JSON export through `todooshka export` and authenticated `GET /api/export`, including projects, tasks, checklists, tags, comments, and attachment metadata without attachment bytes or account data.
+- Frontend tests for due-date boundaries and board filters; CI runs them before the production build.
 
 ### Changed
 
@@ -19,6 +22,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - The next-seven-days filter now means tomorrow through day seven; today has a separate filter option.
 - Done cards show the completion date instead of a relative due date.
 - On mobile, the active column name and counter appear once in the status tabs, with the add action beside them.
+
+### Fixed
+
+- The mobile status tabs no longer show a stray vertical scrollbar beside the add button.
 
 ## [0.1.2] - 2026-11-14
 
@@ -61,7 +68,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - A single binary serving both the API and the React application.
 - Docker Compose deployment with Caddy, HTTPS, and images published to GHCR.
 
-[Unreleased]: https://github.com/vasilchenkome/todooshka/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/vasilchenkome/todooshka/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/vasilchenkome/todooshka/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/vasilchenkome/todooshka/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/vasilchenkome/todooshka/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/vasilchenkome/todooshka/releases/tag/v0.1.0
