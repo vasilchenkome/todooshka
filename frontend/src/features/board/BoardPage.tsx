@@ -524,7 +524,7 @@ export default function BoardPage() {
               ))}
             </div>
 
-            <DragOverlay>
+            <DragOverlay className="z-30">
               {dragged && (
                 <div className="border border-ink bg-paper px-4 py-3 text-[15px] font-medium">
                   {dragged.title}
